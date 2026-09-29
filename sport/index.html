@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Спорт">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Спорт октября</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Onest:wght@400;500;600&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px)}body{margin:0;-webkit-text-size-adjust:100%}
+
+/* Layout: одна колонка для телефона: кольцо прогресса, календарь месяца, нижняя шторка выбора активности */
+:root{
+  --bg:#f1f4f1; --card:#ffffff; --fg:#17231d; --muted:#5f6f66; --line:#dbe3dd;
+  --accent:#1f6b4a; --accent-fg:#ffffff; --accent-soft:#d9eee3; --warm:#e0603a;
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1713; --card:#18231d; --fg:#e8f0ea; --muted:#93a59a; --line:#2a3a31;
+  --accent:#4fbf8a; --accent-fg:#08140e; --accent-soft:#1f3a2c; --warm:#ff8a63; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1713; --card:#18231d; --fg:#e8f0ea; --muted:#93a59a; --line:#2a3a31;
+  --accent:#4fbf8a; --accent-fg:#08140e; --accent-soft:#1f3a2c; --warm:#ff8a63; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45;
+  padding-inline:16px;padding-block:20px 110px}
+main{max-width:460px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.05;margin:0;text-wrap:balance}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.top p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.gear{border:1px solid var(--line);background:var(--card);border-radius:12px;width:44px;height:44px;flex:none;font-size:20px}
+.hero{background:var(--card);border-radius:22px;padding:18px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ring{position:relative;width:118px;height:118px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .t{stroke:var(--accent-soft)} .ring .p{stroke:var(--accent);transition:stroke-dashoffset .4s}
+.ring b{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font-family:var(--font-display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.ring b small{display:block;font-family:var(--font-body);font-size:12px;font-weight:500;color:var(--muted);margin-top:4px}
+.hint{min-width:0;font-size:14px}
+.hint strong{display:block;font-family:var(--font-display);font-size:19px;line-height:1.2;margin-bottom:4px}
+.hint span{color:var(--muted)}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dow span{text-align:center;font-size:12px;color:var(--muted);font-weight:600}
+.day{aspect-ratio:1;min-height:44px;border:1px solid var(--line);background:var(--card);border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;position:relative;font-variant-numeric:tabular-nums}
+.day .n{font-weight:600;font-size:15px}
+.day .m{font-size:10px;line-height:1;font-weight:600;min-height:10px;letter-spacing:.02em}
+.day.done{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.day.today{box-shadow:0 0 0 2px var(--warm)}
+.day.future .n{color:var(--muted)}
+.day.empty{visibility:hidden;border:0}
+.legend{font-size:12px;color:var(--muted);margin:0}
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.chip b{color:var(--fg);font-variant-numeric:tabular-nums}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));
+  max-height:88%;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.sheet h2{font-family:var(--font-display);font-size:22px;margin:0}
+.sheet .sub{margin:-6px 0 0;color:var(--muted);font-size:13px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px;padding:10px 14px;border:1.5px solid var(--line);
+  background:var(--bg);border-radius:14px;text-align:left;width:100%}
+.opt span{min-width:0}
+.opt small{display:block;color:var(--muted);font-size:12px}
+.opt i{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:grid;place-content:center;font-style:normal;font-weight:800;font-size:15px;color:transparent}
+.opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.opt.on i{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn{min-height:48px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-fg);font-weight:600;font-size:16px}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.set{display:flex;flex-direction:column;gap:6px}
+.set label{font-size:13px;color:var(--muted)}
+.goal{display:flex;gap:8px;align-items:center}
+.goal button{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-size:22px}
+.goal output{min-width:48px;text-align:center;font-family:var(--font-display);font-size:24px;font-variant-numeric:tabular-nums}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{min-height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg)}
+.seg button.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.sect{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:6px 0 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<main>
+  <div class="top">
+    <div><h1>Спорт октября</h1><p id="range">Октябрь 2026</p></div>
+    <button class="gear" id="gear" aria-label="Настройки">⚙</button>
+  </div>
+
+  <section class="hero" aria-live="polite">
+    <div class="ring"><svg viewBox="0 0 120 120"><circle class="t" cx="60" cy="60" r="52" fill="none" stroke-width="12"/><circle class="p" id="arc" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round"/></svg>
+      <b><span id="cnt">0</span><small id="of">из 21</small></b></div>
+    <div class="hint"><strong id="h1"></strong><span id="h2"></span></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:8px">
+    <div class="dow"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span></div>
+    <div class="grid" id="grid"></div>
+    <p class="legend">Нажми на день, чтобы отметить, что делала. Оранжевая рамка — сегодня.</p>
+  </section>
+
+  <div class="stats" id="stats"></div>
+</main>
+
+<div class="scrim" id="scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" id="sheet"></div>
+</div>
+
+<script>
+var TYPES=[
+ {id:'body',n:'Тренировка на тело',r:'от 20 мин',s:'Тр',on:1},
+ {id:'run',n:'Бег',r:'от 25 мин',s:'Бег',on:1},
+ {id:'bike',n:'Велотренировка',r:'от 30 мин',s:'Вел',on:1},
+ {id:'gym',n:'Поход в зал',r:'сходила в зал',s:'Зал',on:1},
+ {id:'walk',n:'Ходьба / прогулка',r:'10 000 шагов',s:'Шаг',on:1,walk:1},
+ {id:'yoga',n:'Йога',r:'от 25 мин',s:'Йога',on:1},
+ {id:'stretch',n:'Растяжка / пилатес',r:'от 25 мин',s:'Рст',on:1},
+ {id:'hike',n:'Поход / хайкинг',r:'от 60 мин',s:'Пох'},
+ {id:'game',n:'Теннис, волейбол, командные игры',r:'от 30 мин',s:'Игр',on:1},
+ {id:'skate',n:'Ролики, коньки, самокат',r:'от 30 мин',s:'Рол'},
+ {id:'rope',n:'Скакалка, HIIT, кардио',r:'от 15 мин',s:'Кар',on:1}
+];
+var KEY='sport-oct-2026', Y=2026, M=9;
+var S={days:{},goal:21,enabled:null,mode:'days'};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&typeof p==='object')S=Object.assign(S,p)}}catch(e){}
+if(!S.enabled)S.enabled=TYPES.filter(function(t){return t.on}).map(function(t){return t.id});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function key(d){return Y+'-10-'+(d<10?'0':'')+d}
+function typeById(id){return TYPES.filter(function(t){return t.id===id})[0]}
+var now=new Date(), todayN=(now.getFullYear()===Y&&now.getMonth()===M)?now.getDate():(now<new Date(Y,M,1)?0:32);
+function acts(d){return S.days[key(d)]||[]}
+function total(){var c=0;for(var d=1;d<=31;d++){var a=acts(d);c+=S.mode==='days'?(a.length?1:0):a.length}return c}
+function plural(n,a,b,c){var m=n%10,h=n%100;return (m===1&&h!==11)?a:(m>=2&&m<=4&&(h<12||h>14))?b:c}
+
+function render(){
+  var g=$('grid'),h='';
+  var first=(new Date(Y,M,1).getDay()+6)%7;
+  for(var i=0;i<first;i++)h+='<div class="day empty"></div>';
+  for(var d=1;d<=31;d++){
+    var a=acts(d),cls='day'+(a.length?' done':'')+(d===todayN?' today':'')+(d>todayN?' future':'');
+    var m=a.length?(typeById(a[0])||{s:''}).s+(a.length>1?' +'+(a.length-1):''):'';
+    h+='<button class="'+cls+'" data-d="'+d+'" aria-label="'+d+' октября'+(a.length?', отмечено':'')+'"><span class="n">'+d+'</span><span class="m">'+m+'</span></button>';
+  }
+  g.innerHTML=h;
+  var c=total(),goal=S.goal,pct=Math.min(1,c/goal),C=2*Math.PI*52;
+  $('arc').style.strokeDasharray=C;$('arc').style.strokeDashoffset=C*(1-pct);
+  $('cnt').textContent=c;$('of').textContent='из '+goal;
+  var left=goal-c,daysLeft=todayN>31?0:todayN===0?31:31-todayN+1;
+  if(left<=0){$('h1').textContent='Цель выполнена';$('h2').textContent='Всё, что сверху, уже бонус.'}
+  else if(todayN>31){$('h1').textContent='Не хватило '+left;$('h2').textContent='Месяц закончился.'}
+  else{
+    var per=left/daysLeft, need=per>=1?'Нужно каждый день'+(per>1?', иногда по две':''):'Примерно каждый '+(per>=.5?'второй':Math.ceil(1/per)+'-й')+' день';
+    $('h1').textContent='Осталось '+left+' '+(S.mode==='days'?plural(left,'день','дня','дней'):plural(left,'тренировка','тренировки','тренировок'));
+    $('h2').textContent=need+' · дней впереди: '+daysLeft;
+  }
+  var counts={},best=0,run=0;
+  for(var d2=1;d2<=31;d2++){var aa=acts(d2);aa.forEach(function(id){counts[id]=(counts[id]||0)+1});
+    if(aa.length){run++;best=Math.max(best,run)}else run=0}
+  var st='<span class="chip">Подряд, лучший: <b>'+best+'</b></span>';
+  Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]}).forEach(function(id){
+    var t=typeById(id);if(t)st+='<span class="chip">'+t.n.split(' /')[0].split(',')[0]+': <b>'+counts[id]+'</b></span>'});
+  $('stats').innerHTML=st;
+}
+
+var openDay=0;
+function open(html){$('sheet').innerHTML=html;$('scrim').hidden=false}
+function close(){$('scrim').hidden=true;openDay=0;render()}
+function daySheet(d){
+  openDay=d;var a=S.days[key(d)]||[];
+  var wd=['вс','пн','вт','ср','чт','пт','сб'][new Date(Y,M,d).getDay()];
+  var h='<h2>'+d+' октября, '+wd+'</h2><p class="sub">Отметь всё, что было. Порог — минимум, чтобы день засчитался.</p><div class="opts">';
+  TYPES.filter(function(t){return S.enabled.indexOf(t.id)>-1}).forEach(function(t){
+    var on=a.indexOf(t.id)>-1;
+    h+='<button class="opt'+(on?' on':'')+'" data-t="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
+  h+='</div><button class="btn" id="ok">Готово</button>';
+  open(h);
+}
+function setSheet(){
+  var h='<h2>Настройки</h2><div class="set"><label>Цель на месяц</label><div class="goal"><button id="gm" aria-label="Меньше">−</button><output id="gv">'+S.goal+'</output><button id="gp" aria-label="Больше">+</button></div></div>';
+  h+='<div class="set"><label>Что считать</label><div class="seg"><button data-mode="days" class="'+(S.mode==='days'?'on':'')+'">Дни с активностью</button><button data-mode="all" class="'+(S.mode==='all'?'on':'')+'">Каждую тренировку</button></div></div>';
+  h+='<p class="sect">Какие активности в списке</p><div class="opts">';
+  TYPES.forEach(function(t){var on=S.enabled.indexOf(t.id)>-1;
+    h+='<button class="opt'+(on?' on':'')+'" data-e="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+(t.walk?' · пока не решила, можно выключить':'')+'</small></span><i>✓</i></button>'});
+  h+='</div><button class="btn" id="ok">Готово</button>';
+  open(h);
+}
+$('grid').addEventListener('click',function(e){var b=e.target.closest('.day');if(b&&b.dataset.d)daySheet(+b.dataset.d)});
+$('gear').addEventListener('click',setSheet);
+$('scrim').addEventListener('click',function(e){if(e.target===$('scrim')||e.target.id==='ok')close()});
+$('sheet').addEventListener('click',function(e){
+  var o=e.target.closest('.opt');
+  if(o&&o.dataset.t){var k=key(openDay),a=S.days[k]||[],i=a.indexOf(o.dataset.t);
+    if(i>-1)a.splice(i,1);else a.push(o.dataset.t);
+    if(a.length)S.days[k]=a;else delete S.days[k];save();o.classList.toggle('on');o.setAttribute('aria-pressed',i<0);return}
+  if(o&&o.dataset.e){var j=S.enabled.indexOf(o.dataset.e);if(j>-1)S.enabled.splice(j,1);else S.enabled.push(o.dataset.e);
+    save();o.classList.toggle('on');o.setAttribute('aria-pressed',j<0);return}
+  var m=e.target.closest('[data-mode]');if(m){S.mode=m.dataset.mode;save();setSheet();return}
+  if(e.target.id==='gm'||e.target.id==='gp'){S.goal=Math.max(1,Math.min(31,S.goal+(e.target.id==='gp'?1:-1)));save();$('gv').textContent=S.goal}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('scrim').hidden)close()});
+render();
+</script>
+
+</body>
+</html>
