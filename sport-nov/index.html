@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sport Nov">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="apple-touch-icon.png">
+<link rel="preload" as="image" href="bg.jpg">
+<title>Sport November</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Onest:wght@400;500;600&display=swap">
+<style>
+/* Layout: одна колонка для телефона поверх осеннего пейзажа на весь экран; карточки — матовое стекло, пейзаж — задний план */
+:root{padding-top:env(safe-area-inset-top,0px)}
+:root{
+  --bg:#f4efea; --card:#fffdfa; --fg:#2a1d17; --muted:#6e5a4e; --line:#e6dcd3;
+  --glass:rgba(255,250,244,.6); --glass-line:rgba(255,255,255,.7); --shade:rgba(0,0,0,0);
+  --accent:#b5501d; --accent-fg:#ffffff; --accent-soft:#f7dcc6; --warm:#f0b04a;
+  --l1:#c35d21; --l2:#9b3b14; --l3:#6b2310; --l4:#b06a22; --l5:#7a4a2a; --leaf-fg:#ffffff;
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1a1310; --card:#251b16; --fg:#f3e8df; --muted:#c2ae9f; --line:#3b2c24;
+  --glass:rgba(30,19,13,.58); --glass-line:rgba(255,255,255,.08); --shade:rgba(12,6,3,.45);
+  --accent:#e47a3c; --accent-fg:#1e110a; --accent-soft:#4a2a18; --warm:#f2c14e;
+  --l1:#e47a3c; --l2:#cf5a2a; --l3:#b8452e; --l4:#e3a04e; --l5:#bf8452; --leaf-fg:#1e110a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1a1310; --card:#251b16; --fg:#f3e8df; --muted:#c2ae9f; --line:#3b2c24;
+  --glass:rgba(30,19,13,.58); --glass-line:rgba(255,255,255,.08); --shade:rgba(12,6,3,.45);
+  --accent:#e47a3c; --accent-fg:#1e110a; --accent-soft:#4a2a18; --warm:#f2c14e;
+  --l1:#e47a3c; --l2:#cf5a2a; --l3:#b8452e; --l4:#e3a04e; --l5:#bf8452; --leaf-fg:#1e110a; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 120px}
+#scene{position:fixed;inset:0;pointer-events:none;z-index:0;background:var(--bg) url(bg.jpg) center 30%/cover no-repeat}
+#scene::after{content:"";position:absolute;inset:0;background:var(--shade)}
+main{max-width:460px;margin-inline:auto;display:flex;flex-direction:column;gap:14px;position:relative;z-index:1}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.glass{background:var(--glass);border:1px solid var(--glass-line);-webkit-backdrop-filter:blur(12px) saturate(1.1);backdrop-filter:blur(12px) saturate(1.1)}
+
+h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.05;margin:0;text-wrap:balance}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 12px 12px 16px;border-radius:20px}
+.top p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.gear{border:1px solid var(--line);background:var(--card);border-radius:12px;width:44px;height:44px;flex:none;font-size:20px}
+.hero{border-radius:22px;padding:18px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ring{position:relative;width:118px;height:118px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .t{stroke:var(--accent-soft)} .ring .p{stroke:var(--accent);transition:stroke-dashoffset .4s}
+.ring b{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font-family:var(--font-display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.ring b small{display:block;font-family:var(--font-body);font-size:12px;font-weight:500;color:var(--muted);margin-top:4px}
+.hint{min-width:0;font-size:14px}
+.hint strong{display:block;font-family:var(--font-display);font-size:19px;line-height:1.2;margin-bottom:4px}
+.hint span{color:var(--muted)}
+.cal{border-radius:22px;padding:14px 10px 12px;display:flex;flex-direction:column;gap:8px}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dow span{text-align:center;font-size:12px;color:var(--muted);font-weight:600}
+.day{aspect-ratio:1;min-height:40px;max-width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;position:relative;font-variant-numeric:tabular-nums}
+.day .n{font-weight:600;font-size:15px}
+.day .m{font-size:10px;line-height:1;font-weight:600;min-height:10px;letter-spacing:.02em}
+.day.done{background:var(--leaf);border-color:var(--leaf);color:var(--leaf-fg)}
+.day.today{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--warm)}
+.day.future .n{color:var(--muted)}
+.day.empty{visibility:hidden;border:0}
+.legend{font-size:12px;color:var(--muted);margin:0 4px}
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.chip b{color:var(--fg);font-variant-numeric:tabular-nums}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:24px 24px 0 0;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  max-height:88%;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.sheet h2{font-family:var(--font-display);font-size:22px;margin:0}
+.sheet .sub{margin:-6px 0 0;color:var(--muted);font-size:13px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px;padding:10px 14px;border:1.5px solid var(--line);
+  background:var(--bg);border-radius:14px;text-align:left;width:100%}
+.opt span{min-width:0}
+.opt small{display:block;color:var(--muted);font-size:12px}
+.opt i{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:grid;place-content:center;font-style:normal;font-weight:800;font-size:15px;color:transparent}
+.opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.opt.on i{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn{min-height:48px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-fg);font-weight:600;font-size:16px}
+.set{display:flex;flex-direction:column;gap:6px}
+.set label{font-size:13px;color:var(--muted)}
+.goal{display:flex;gap:8px;align-items:center}
+.goal button{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-size:22px}
+.goal output{min-width:48px;text-align:center;font-family:var(--font-display);font-size:24px;font-variant-numeric:tabular-nums}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{min-height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg)}
+.seg button.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.sect{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:6px 0 0}
+
+/* листопад: несколько листьев падают, когда день отмечен */
+.fall{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:6}
+.fall svg{position:absolute;top:-40px;width:26px;height:26px;animation:drop 2.4s cubic-bezier(.35,.1,.6,1) forwards}
+@keyframes drop{
+  0%{transform:translate(0,0) rotate(0);opacity:0}
+  10%{opacity:1}
+  50%{transform:translate(var(--dx),48vh) rotate(160deg)}
+  100%{transform:translate(calc(var(--dx) * -.4),100vh) rotate(320deg);opacity:0}}
+@media (prefers-reduced-motion: reduce){.fall{display:none}}
+
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="scene" aria-hidden="true"></div>
+
+<main>
+  <div class="top glass">
+    <div><h1>Sport November</h1><p id="range">Ноябрь 2026</p></div>
+    <button class="gear" id="gear" aria-label="Настройки">⚙</button>
+  </div>
+
+  <section class="hero glass" aria-live="polite">
+    <div class="ring"><svg viewBox="0 0 120 120"><circle class="t" cx="60" cy="60" r="52" fill="none" stroke-width="12"/><circle class="p" id="arc" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round"/></svg>
+      <b><span id="cnt">0</span><small id="of">из 21</small></b></div>
+    <div class="hint"><strong id="h1"></strong><span id="h2"></span></div>
+  </section>
+
+  <section class="cal glass">
+    <div class="dow"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span></div>
+    <div class="grid" id="grid"></div>
+    <p class="legend">Нажми на день, чтобы отметить, что делала. Жёлтая рамка — сегодня.</p>
+  </section>
+
+  <div class="stats" id="stats"></div>
+</main>
+
+
+<div class="scrim" id="scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" id="sheet"></div>
+</div>
+
+<script>
+var TYPES=[
+ {id:'run',n:'Бег',r:'от 25 мин',s:'Бег',on:1},
+ {id:'bike',n:'Велотренировка',r:'от 30 мин',s:'Вел',on:1},
+ {id:'strength',n:'Силовая тренировка',r:'от 30 мин, в зале или дома',s:'Сил',on:1},
+ {id:'walk',n:'Ходьба / прогулка',r:'10 000 шагов',s:'Шаг',on:1},
+ {id:'yoga',n:'Йога',r:'от 25 мин',s:'Йога',on:1},
+ {id:'lfk',n:'ЛФК',r:'от 20 мин',s:'ЛФК',on:1},
+ {id:'stretch',n:'Растяжка / пилатес',r:'от 25 мин',s:'Рст',on:1},
+ {id:'game',n:'Теннис, волейбол, командные игры',r:'от 30 мин',s:'Игр',on:1},
+ {id:'tread',n:'Дорожка в гору',r:'от 30 мин · наклон от 10, бодрый шаг',s:'Дор',on:1},
+ {id:'rope',n:'Скакалка, HIIT, кардио',r:'от 15 мин',s:'Кар',on:1}
+];
+var KEY='sport-nov-2026', Y=2026, M=10, MON='ноября';
+var N=new Date(Y,M+1,0).getDate(), MM=(M+1<10?'0':'')+(M+1);
+var LEAF='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c-4.6 3.3-7 7.1-7 11a7 7 0 0 0 6 6.9V22h2v-2.1a7 7 0 0 0 6-6.9c0-3.9-2.4-7.7-7-11z"/><path d="M12 7v12M12 12l-3-2.5M12 15l3-2.5" stroke="var(--card)" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>';
+var LEAVES=['var(--l1)','var(--l2)','var(--l4)','var(--l3)','var(--l5)'];
+var S={days:{},goal:21,enabled:null,mode:'days'};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&typeof p==='object')S=Object.assign(S,p)}}catch(e){}
+if(!S.enabled)S.enabled=TYPES.filter(function(t){return t.on}).map(function(t){return t.id});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function key(d){return Y+'-'+MM+'-'+(d<10?'0':'')+d}
+function typeById(id){return TYPES.filter(function(t){return t.id===id})[0]}
+var now=new Date(), todayN=(now.getFullYear()===Y&&now.getMonth()===M)?now.getDate():(now<new Date(Y,M,1)?0:N+1);
+function acts(d){return S.days[key(d)]||[]}
+function total(){var c=0;for(var d=1;d<=N;d++){var a=acts(d);c+=S.mode==='days'?(a.length?1:0):a.length}return c}
+function plural(n,a,b,c){var m=n%10,h=n%100;return (m===1&&h!==11)?a:(m>=2&&m<=4&&(h<12||h>14))?b:c}
+
+function render(){
+  var g=$('grid'),h='';
+  var first=(new Date(Y,M,1).getDay()+6)%7;
+  for(var i=0;i<first;i++)h+='<div class="day empty"></div>';
+  for(var d=1;d<=N;d++){
+    var a=acts(d),cls='day'+(a.length?' done':'')+(d===todayN?' today':'')+(d>todayN?' future':'');
+    var m=a.length?(typeById(a[0])||{s:''}).s+(a.length>1?' +'+(a.length-1):''):'';
+    h+='<button class="'+cls+'" style="--leaf:'+LEAVES[d%5]+'" data-d="'+d+'" aria-label="'+d+' '+MON+(a.length?', отмечено':'')+'"><span class="n">'+d+'</span><span class="m">'+m+'</span></button>';
+  }
+  g.innerHTML=h;
+  var c=total(),goal=S.goal,pct=Math.min(1,c/goal),C=2*Math.PI*52;
+  $('arc').style.strokeDasharray=C;$('arc').style.strokeDashoffset=C*(1-pct);
+  $('cnt').textContent=c;$('of').textContent='из '+goal;
+  var left=goal-c,daysLeft=todayN>N?0:todayN===0?N:N-todayN+1;
+  if(left<=0){$('h1').textContent='Цель выполнена';$('h2').textContent='Всё, что сверху, уже бонус.'}
+  else if(todayN>N){$('h1').textContent='Не хватило '+left;$('h2').textContent='Месяц закончился.'}
+  else{
+    var per=left/daysLeft, need=per>=1?'Нужно каждый день'+(per>1?', иногда по две':''):'Примерно каждый '+(per>=.5?'второй':Math.ceil(1/per)+'-й')+' день';
+    $('h1').textContent='Осталось '+left+' '+(S.mode==='days'?plural(left,'день','дня','дней'):plural(left,'тренировка','тренировки','тренировок'));
+    $('h2').textContent=need+' · дней впереди: '+daysLeft;
+  }
+  var counts={},best=0,run=0;
+  for(var d2=1;d2<=N;d2++){var aa=acts(d2);aa.forEach(function(id){counts[id]=(counts[id]||0)+1});
+    if(aa.length){run++;best=Math.max(best,run)}else run=0}
+  var st='<span class="chip glass">Подряд, лучший: <b>'+best+'</b></span>';
+  Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]}).forEach(function(id){
+    var t=typeById(id);if(t)st+='<span class="chip glass">'+t.n.split(' /')[0].split(',')[0]+': <b>'+counts[id]+'</b></span>'});
+  $('stats').innerHTML=st;
+}
+
+function fall(){
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var box=document.createElement('div');box.className='fall';
+  for(var i=0;i<7;i++){var w=document.createElement('div');w.innerHTML=LEAF;var s=w.firstChild;
+    s.style.left=(8+Math.random()*84)+'%';s.style.color=LEAVES[i%5];s.style.animationDelay=(i*.12)+'s';
+    s.style.setProperty('--dx',(Math.random()*80-40)+'px');box.appendChild(s)}
+  document.body.appendChild(box);setTimeout(function(){box.remove()},3400);
+}
+
+var openDay=0,wasDone=false;
+function open(html){$('sheet').innerHTML=html;$('scrim').hidden=false}
+function close(){var nowDone=openDay&&acts(openDay).length>0;$('scrim').hidden=true;
+  if(openDay&&!wasDone&&nowDone)fall();openDay=0;render()}
+function daySheet(d){
+  openDay=d;var a=S.days[key(d)]||[];wasDone=a.length>0;
+  var wd=['вс','пн','вт','ср','чт','пт','сб'][new Date(Y,M,d).getDay()];
+  var h='<h2>'+d+' '+MON+', '+wd+'</h2><p class="sub">Отметь всё, что было. Порог — минимум, чтобы день засчитался.</p><div class="opts">';
+  TYPES.filter(function(t){return S.enabled.indexOf(t.id)>-1}).forEach(function(t){
+    var on=a.indexOf(t.id)>-1;
+    h+='<button class="opt'+(on?' on':'')+'" data-t="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
+  h+='</div><button class="btn" id="ok">Готово</button>';
+  open(h);
+}
+function setSheet(){
+  openDay=0;
+  var h='<h2>Настройки</h2><div class="set"><label>Цель на месяц</label><div class="goal"><button id="gm" aria-label="Меньше">−</button><output id="gv">'+S.goal+'</output><button id="gp" aria-label="Больше">+</button></div></div>';
+  h+='<div class="set"><label>Что считать</label><div class="seg"><button data-mode="days" class="'+(S.mode==='days'?'on':'')+'">Дни с активностью</button><button data-mode="all" class="'+(S.mode==='all'?'on':'')+'">Каждую тренировку</button></div></div>';
+  h+='<p class="sect">Какие активности в списке</p><div class="opts">';
+  TYPES.forEach(function(t){var on=S.enabled.indexOf(t.id)>-1;
+    h+='<button class="opt'+(on?' on':'')+'" data-e="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
+  h+='</div><button class="btn" id="ok">Готово</button>';
+  open(h);
+}
+$('grid').addEventListener('click',function(e){var b=e.target.closest('.day');if(b&&b.dataset.d)daySheet(+b.dataset.d)});
+$('gear').addEventListener('click',setSheet);
+$('scrim').addEventListener('click',function(e){if(e.target===$('scrim')||e.target.id==='ok')close()});
+$('sheet').addEventListener('click',function(e){
+  var o=e.target.closest('.opt');
+  if(o&&o.dataset.t){var k=key(openDay),a=S.days[k]||[],i=a.indexOf(o.dataset.t);
+    if(i>-1)a.splice(i,1);else a.push(o.dataset.t);
+    if(a.length)S.days[k]=a;else delete S.days[k];save();o.classList.toggle('on');o.setAttribute('aria-pressed',i<0);return}
+  if(o&&o.dataset.e){var j=S.enabled.indexOf(o.dataset.e);if(j>-1)S.enabled.splice(j,1);else S.enabled.push(o.dataset.e);
+    save();o.classList.toggle('on');o.setAttribute('aria-pressed',j<0);return}
+  var m=e.target.closest('[data-mode]');if(m){S.mode=m.dataset.mode;save();setSheet();return}
+  if(e.target.id==='gm'||e.target.id==='gp'){S.goal=Math.max(1,Math.min(N,S.goal+(e.target.id==='gp'?1:-1)));save();$('gv').textContent=S.goal}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('scrim').hidden)close()});
+
+render();
+</script>
+
+</body>
+</html>
