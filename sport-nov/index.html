@@ -294,10 +294,17 @@ function push(days){if(!sharing())return;
     fetch(SHEET_URL+'?action=save&name='+encodeURIComponent(S.me)+'&date='+k+'&acts='+acts(d).join(','),{mode:'no-cors'})
       .then(function(){if(S.dirty){delete S.dirty[k];save()}})
       .catch(function(){S.dirty=S.dirty||{};S.dirty[k]=1;save()})});
-  clearTimeout(push.t);push.t=setTimeout(loadTeam,2500)}
-function pushAll(){var ds=[];for(var d=1;d<=N;d++)if(acts(d).length)ds.push(d);push(ds);S.pushed=1;save()}
+  /* таблица записывает пару секунд — перечитываем цифры с запасом */
+  clearTimeout(push.t);clearTimeout(push.t2);push.t=setTimeout(loadTeam,6000);push.t2=setTimeout(loadTeam,15000)}
+/* «я с вами»: строка с днём 00 и пометкой join — чтобы подруга видела тебя сразу, ещё без отметок */
+function joinTeam(){if(!sharing())return;
+  fetch(SHEET_URL+'?action=save&name='+encodeURIComponent(S.me)+'&date='+Y+'-'+MM+'-00&acts=join',{mode:'no-cors'})
+    .then(function(){S.joined=Y+'-'+MM;save()}).catch(function(){})}
+function pushAll(){var ds=[];for(var d=1;d<=N;d++)if(acts(d).length)ds.push(d);joinTeam();push(ds);S.pushed=1;save()}
 function loadTeam(){if(!SHEET_URL)return;
-  fetch(SHEET_URL+'?month='+Y+'-'+MM).then(function(r){return r.json()}).then(function(j){TEAM=j.people||[];TEAMAT=new Date();renderTeam()}).catch(function(){})}
+  fetch(SHEET_URL+'?month='+Y+'-'+MM).then(function(r){return r.json()}).then(function(j){
+    TEAM=(j.people||[]).map(function(p){var k=p.by&&p.by.join||0;if(k){p.d-=1;p.w-=k;delete p.by.join}return p});
+    TEAMAT=new Date();renderTeam()}).catch(function(){})}
 function ava(name){var src=AVA[name];
   return '<span class="av">'+(src?'<img src="'+src+'" alt="" onerror="this.parentNode.textContent=\''+name[0]+'\'">':name[0])+'</span>'}
 function renderTeam(){var box=$('team');
@@ -362,7 +369,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('scrim')
 
 render();
 if(SHEET_URL){
-  if(!S.me)nameSheet();else{if(!S.pushed&&S.me!=='-')pushAll();else if(S.dirty)push(Object.keys(S.dirty).map(function(k){return +k.slice(-2)}));loadTeam()}
+  if(!S.me)nameSheet();else{if(S.me!=='-'&&S.joined!==Y+'-'+MM)joinTeam();if(!S.pushed&&S.me!=='-')pushAll();else if(S.dirty)push(Object.keys(S.dirty).map(function(k){return +k.slice(-2)}));loadTeam()}
   document.addEventListener('visibilitychange',function(){if(!document.hidden)loadTeam()});
 }
 </script>
