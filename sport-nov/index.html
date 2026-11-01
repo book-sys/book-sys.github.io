@@ -109,6 +109,48 @@ h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.
 @media (prefers-reduced-motion: reduce){.fall{display:none}}
 
 [hidden]{display:none!important}
+
+/* счётчики: две плитки с листом на фоне */
+.hero{display:block}
+.lts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lt{position:relative;overflow:hidden;background:var(--card);border-radius:18px;padding:14px 14px 12px;display:flex;flex-direction:column;min-width:0}
+.lt .bgl{position:absolute;right:-22px;top:-18px;width:96px;height:96px;opacity:.16;transform:rotate(18deg)}
+.lt b{position:relative;font-family:var(--font-display);font-size:48px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.lt:nth-child(2) b{color:#8c3b1a}
+.lt span{position:relative;font-size:13px;color:var(--fg);margin-top:2px;line-height:1.25}
+.lt .ln{height:7px;border-radius:99px;background:var(--accent-soft);margin:10px 0 4px;overflow:hidden}
+.lt .ln i{display:block;height:100%;border-radius:99px}
+.lt small{font-size:12px;color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px}
+.pills span{background:var(--card);border-radius:99px;padding:5px 12px;font-size:12.5px;color:var(--muted);text-align:center}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lt:nth-child(2) b{color:#f0a060}}
+:root[data-theme="dark"] .lt:nth-child(2) b{color:#f0a060}
+/* клетка дня: цвет активности, несколько — наискосок */
+.day.done{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.day.done.lt2{color:#3a1d0e;text-shadow:0 1px 1px rgba(255,255,255,.45)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
+/* как мы движемся */
+.team{border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.team h2{font-family:var(--font-display);font-size:19px;margin:0}
+.team .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.team .head span{font-size:12px;color:var(--muted)}
+.ppl{display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
+.ppl li{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-content:center;font-family:var(--font-display);font-weight:800;font-size:18px;color:#fff;overflow:hidden;box-shadow:0 0 0 2px var(--card);background:var(--accent)}
+.av img{width:100%;height:100%;object-fit:cover}
+.ppl .nm{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.ppl .nm b{font-weight:600}
+.ppl .nm span{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ppl li.me .nm b::after{content:" · ты";color:var(--muted);font-weight:400}
+.tr{display:flex;height:10px;border-radius:99px;background:var(--accent-soft);margin-top:5px;overflow:hidden}
+.tr i{display:block;height:100%}
+.tr i+i{box-shadow:inset 1px 0 0 rgba(255,255,255,.6)}
+.nameopt{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.nameopt button{min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);font-weight:600}
+.nameopt button.on{border-color:var(--accent);background:var(--accent-soft)}
+.other{display:flex;gap:8px}
+.other input{flex:1;min-width:0;min-height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;padding:0 12px}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;padding:6px}
 </style>
 </head>
 <body>
@@ -121,17 +163,15 @@ h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.
     <button class="gear" id="gear" aria-label="Настройки">⚙</button>
   </div>
 
-  <section class="hero glass" aria-live="polite">
-    <div class="ring"><svg viewBox="0 0 120 120"><circle class="t" cx="60" cy="60" r="52" fill="none" stroke-width="12"/><circle class="p" id="arc" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round"/></svg>
-      <b><span id="cnt">0</span><small id="of">из 21</small></b></div>
-    <div class="hint"><strong id="h1"></strong><span id="h2"></span></div>
-  </section>
+  <section class="hero glass" id="hero" aria-live="polite"></section>
 
   <section class="cal glass">
     <div class="dow"><span>пн</span><span>вт</span><span>ср</span><span>чт</span><span>пт</span><span>сб</span><span>вс</span></div>
     <div class="grid" id="grid"></div>
     <p class="legend">Нажми на день, чтобы отметить, что делала. Жёлтая рамка — сегодня.</p>
   </section>
+
+  <section class="team glass" id="team" hidden></section>
 
   <div class="stats" id="stats"></div>
 </main>
@@ -157,6 +197,13 @@ var TYPES=[
  {id:'tread',n:'Дорожка в гору',r:'от 30 мин · наклон от 10, бодрый шаг',s:'Дор',on:1},
  {id:'rope',n:'Скакалка, HIIT, кардио',r:'от 15 мин',s:'Кар',on:1}
 ];
+/* цвета активностей — палитра «Золотая осень» */
+var TC={run:'#e07b39',bike:'#a0682f',cycle:'#d98c3a',strength:'#8c3b1a',group:'#c2553a',walk:'#e8b84a',yoga:'#c9a24a',
+  lfk:'#f0c96a',back:'#a8794a',stretch:'#e9a07a',game:'#d4602e',tread:'#f09a3e',rope:'#9a4a2a'};
+TYPES.forEach(function(t){t.c=TC[t.id]||'#a0682f'});
+/* общая статистика подруг: адрес веб-приложения Google-таблицы (пусто — блок не показывается) */
+var SHEET_URL='';
+var NAMES=['Марина','Юля','Татьяна'], AVA={'Марина':'ava/marina.png','Юля':'ava/yulia.png','Татьяна':'ava/tatiana.png'};
 var KEY='sport-nov-2026', Y=2026, M=10, MON='ноября';
 var N=new Date(Y,M+1,0).getDate(), MM=(M+1<10?'0':'')+(M+1);
 var LEAF='<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c-4.6 3.3-7 7.1-7 11a7 7 0 0 0 6 6.9V22h2v-2.1a7 7 0 0 0 6-6.9c0-3.9-2.4-7.7-7-11z"/><path d="M12 7v12M12 12l-3-2.5M12 15l3-2.5" stroke="var(--card)" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>';
@@ -175,34 +222,45 @@ var now=new Date(), todayN=(now.getFullYear()===Y&&now.getMonth()===M)?now.getDa
 function acts(d){return S.days[key(d)]||[]}
 function total(){var c=0;for(var d=1;d<=N;d++){var a=acts(d);c+=S.mode==='days'?(a.length?1:0):a.length}return c}
 function plural(n,a,b,c){var m=n%10,h=n%100;return (m===1&&h!==11)?a:(m>=2&&m<=4&&(h<12||h>14))?b:c}
+function colorOf(id){var x=typeById(id);return x?x.c:'#a0682f'}
+function light(h){var n=parseInt(h.slice(1),16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))>160}
+function dayStyle(a){if(!a.length)return '';
+  if(a.length===1)return 'background:'+colorOf(a[0])+';border-color:transparent';
+  var st=100/a.length;return 'background:linear-gradient(135deg,'+a.map(function(id,i){return colorOf(id)+' '+(i*st)+'% '+((i+1)*st)+'%'}).join(',')+');border-color:transparent'}
+function dot(c){return '<em class="dot" style="background:'+c+'"></em>'}
+function nums(){var d=0,w=0;for(var i=1;i<=N;i++){var a=acts(i);if(a.length)d++;w+=a.length}
+  var passed=todayN>N?N:Math.max(0,todayN);return{d:d,w:w,passed:passed}}
+function paceText(n){var goal=S.goal,cur=S.mode==='days'?n.d:n.w,left=goal-cur,days=todayN>N?0:todayN<1?N:N-todayN+1;
+  if(left<=0)return 'Цель выполнена. Всё, что сверху, уже бонус.';
+  if(days<=0)return 'Месяц закончился, не хватило '+left+'.';
+  var per=left/days;return 'До цели '+left+' '+(S.mode==='days'?plural(left,'день','дня','дней'):plural(left,'тренировка','тренировки','тренировок'))+'. '+(per>=1?'Нужно каждый день'+(per>1?', иногда по две':'')+'.':'Примерно каждый '+(per>=.5?'второй':Math.ceil(1/per)+'-й')+' день.')}
+var LEAFP='M50 4 L58 21 L69 15 L67 35 L85 27 L79 43 L96 45 L81 57 L87 66 L63 66 L61 77 L53 72 L52 97 L48 97 L47 72 L39 77 L37 66 L13 66 L19 57 L4 45 L21 43 L15 27 L33 35 L31 15 L42 21 Z';
+function renderHero(){
+  var n=nums(),goal=S.goal;
+  function tl(v,cap,sub,g1,g2){return '<div class="lt"><svg class="bgl" viewBox="0 0 100 100" aria-hidden="true"><path d="'+LEAFP+'" fill="'+g2+'"/></svg>'+
+    '<b>'+v+'</b><span>'+cap+'</span><div class="ln"><i style="width:'+Math.min(100,v/goal*100)+'%;background:linear-gradient(90deg,'+g1+','+g2+')"></i></div><small>'+sub+'</small></div>'}
+  $('hero').innerHTML='<div class="lts">'+tl(n.d,plural(n.d,'день','дня','дней')+' с активностью',n.d+' из '+goal,'#f0b04a','#b5501d')+
+    tl(n.w,plural(n.w,'тренировка','тренировки','тренировок'),'за месяц','#f3c76a','#8c3b1a')+'</div>'+
+    '<div class="pills"><span>Прошло '+n.passed+' из '+N+' дней</span><span>'+paceText(n)+'</span></div>';
+}
 
 function render(){
   var g=$('grid'),h='';
   var first=(new Date(Y,M,1).getDay()+6)%7;
   for(var i=0;i<first;i++)h+='<div class="day empty"></div>';
   for(var d=1;d<=N;d++){
-    var a=acts(d),cls='day'+(a.length?' done':'')+(d===todayN?' today':'')+(d>todayN?' future':'');
+    var a=acts(d),cls='day'+(a.length?' done':'')+(a.length===1&&light(colorOf(a[0]))?' lt2':'')+(d===todayN?' today':'')+(d>todayN?' future':'');
     var m=a.length?(typeById(a[0])||{s:''}).s+(a.length>1?' +'+(a.length-1):''):'';
-    h+='<button class="'+cls+'" style="--leaf:'+LEAVES[d%5]+'" data-d="'+d+'" aria-label="'+d+' '+MON+(a.length?', отмечено':'')+'"><span class="n">'+d+'</span><span class="m">'+m+'</span></button>';
+    h+='<button class="'+cls+'" style="'+dayStyle(a)+'" data-d="'+d+'" aria-label="'+d+' '+MON+(a.length?', отмечено':'')+'"><span class="n">'+d+'</span><span class="m">'+m+'</span></button>';
   }
   g.innerHTML=h;
-  var c=total(),goal=S.goal,pct=Math.min(1,c/goal),C=2*Math.PI*52;
-  $('arc').style.strokeDasharray=C;$('arc').style.strokeDashoffset=C*(1-pct);
-  $('cnt').textContent=c;$('of').textContent='из '+goal;
-  var left=goal-c,daysLeft=todayN>N?0:todayN===0?N:N-todayN+1;
-  if(left<=0){$('h1').textContent='Цель выполнена';$('h2').textContent='Всё, что сверху, уже бонус.'}
-  else if(todayN>N){$('h1').textContent='Не хватило '+left;$('h2').textContent='Месяц закончился.'}
-  else{
-    var per=left/daysLeft, need=per>=1?'Нужно каждый день'+(per>1?', иногда по две':''):'Примерно каждый '+(per>=.5?'второй':Math.ceil(1/per)+'-й')+' день';
-    $('h1').textContent='Осталось '+left+' '+(S.mode==='days'?plural(left,'день','дня','дней'):plural(left,'тренировка','тренировки','тренировок'));
-    $('h2').textContent=need+' · дней впереди: '+daysLeft;
-  }
+  renderHero();renderTeam();
   var counts={},best=0,run=0;
   for(var d2=1;d2<=N;d2++){var aa=acts(d2);aa.forEach(function(id){counts[id]=(counts[id]||0)+1});
     if(aa.length){run++;best=Math.max(best,run)}else run=0}
   var st='<span class="chip glass">Подряд, лучший: <b>'+best+'</b></span>';
   Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]}).forEach(function(id){
-    var t=typeById(id);if(t)st+='<span class="chip glass">'+t.n.split(' /')[0].split(',')[0]+': <b>'+counts[id]+'</b></span>'});
+    var t=typeById(id);if(t)st+='<span class="chip glass">'+dot(t.c)+t.n.split(' /')[0].split(',')[0]+': <b>'+counts[id]+'</b></span>'});
   $('stats').innerHTML=st;
 }
 
@@ -215,17 +273,51 @@ function fall(){
   document.body.appendChild(box);setTimeout(function(){box.remove()},3400);
 }
 
-var openDay=0,wasDone=false;
+var openDay=0,wasDone=false,wasActs='';
 function open(html){$('sheet').innerHTML=html;$('scrim').hidden=false}
 function close(){var nowDone=openDay&&acts(openDay).length>0;$('scrim').hidden=true;
-  if(openDay&&!wasDone&&nowDone)fall();openDay=0;render()}
+  if(openDay&&!wasDone&&nowDone)fall();if(openDay&&acts(openDay).join(',')!==wasActs)push([openDay]);openDay=0;render()}
+
+/* общая таблица: отправляем свои дни, забираем цифры подруг */
+var TEAM=null,TEAMAT=null;
+function sharing(){return SHEET_URL&&S.me&&S.me!=='-'}
+function push(days){if(!sharing())return;
+  days.forEach(function(d){var k=key(d);
+    fetch(SHEET_URL+'?action=save&name='+encodeURIComponent(S.me)+'&date='+k+'&acts='+acts(d).join(','),{mode:'no-cors'})
+      .then(function(){if(S.dirty){delete S.dirty[k];save()}})
+      .catch(function(){S.dirty=S.dirty||{};S.dirty[k]=1;save()})});
+  clearTimeout(push.t);push.t=setTimeout(loadTeam,2500)}
+function pushAll(){var ds=[];for(var d=1;d<=N;d++)if(acts(d).length)ds.push(d);push(ds);S.pushed=1;save()}
+function loadTeam(){if(!SHEET_URL)return;
+  fetch(SHEET_URL+'?month='+Y+'-'+MM).then(function(r){return r.json()}).then(function(j){TEAM=j.people||[];TEAMAT=new Date();renderTeam()}).catch(function(){})}
+function ava(name){var src=AVA[name];
+  return '<span class="av">'+(src?'<img src="'+src+'" alt="" onerror="this.parentNode.textContent=\''+name[0]+'\'">':name[0])+'</span>'}
+function renderTeam(){var box=$('team');
+  if(!SHEET_URL||!TEAM){box.hidden=true;return}
+  var n=nums(),goal=S.goal,me=S.me&&S.me!=='-'?S.me:'',list=TEAM.filter(function(p){return p.name!==me});
+  if(me){var by={};for(var i=1;i<=N;i++)acts(i).forEach(function(id){by[id]=(by[id]||0)+1});list.push({name:me,d:n.d,w:n.w,by:by,me:1})}
+  if(!list.length){box.hidden=true;return}
+  list.sort(function(a,b){return b.d-a.d||b.w-a.w});
+  var hh=TEAMAT?('0'+TEAMAT.getHours()).slice(-2)+':'+('0'+TEAMAT.getMinutes()).slice(-2):'';
+  box.innerHTML='<div class="head"><h2>Как мы движемся</h2><span>обновлено '+hh+'</span></div><ul class="ppl">'+list.map(function(p){
+    var full=Math.min(100,p.d/goal*100),ids=Object.keys(p.by||{}).sort(function(a,b){return p.by[b]-p.by[a]});
+    var seg=ids.map(function(id){return '<i style="width:'+(p.w?full*p.by[id]/p.w:0)+'%;background:'+colorOf(id)+'"></i>'}).join('');
+    return '<li class="'+(p.me?'me':'')+'">'+ava(p.name)+'<div><div class="nm"><b>'+p.name+'</b><span>'+p.d+' '+plural(p.d,'день','дня','дней')+' · '+p.w+' трен.</span></div><div class="tr">'+seg+'</div></div></li>'}).join('')+'</ul>';
+  box.hidden=false}
+function nameSheet(){
+  var h='<h2>Как тебя зовут?</h2><p class="sub">Имя видно подругам в блоке «Как мы движемся» вместе с твоими днями и тренировками.</p><div class="nameopt">'+
+    NAMES.map(function(x){return '<button data-name="'+x+'" class="'+(S.me===x?'on':'')+'">'+x+'</button>'}).join('')+'</div>'+
+    '<div class="other"><input id="oname" placeholder="Другое имя" maxlength="30" autocomplete="off"><button class="btn" id="oset" style="padding:0 16px">Это я</button></div>'+
+    '<button class="link" data-name="-">Не показывать меня подругам</button>';
+  openDay=0;open(h)}
+function setName(v){S.me=v;save();$('scrim').hidden=true;render();if(v!=='-'){pushAll()}else loadTeam()}
 function daySheet(d){
-  openDay=d;var a=S.days[key(d)]||[];wasDone=a.length>0;
+  openDay=d;var a=S.days[key(d)]||[];wasDone=a.length>0;wasActs=a.join(',');
   var wd=['вс','пн','вт','ср','чт','пт','сб'][new Date(Y,M,d).getDay()];
   var h='<h2>'+d+' '+MON+', '+wd+'</h2><p class="sub">Отметь всё, что было. Порог — минимум, чтобы день засчитался.</p><div class="opts">';
   TYPES.filter(function(t){return S.enabled.indexOf(t.id)>-1}).forEach(function(t){
     var on=a.indexOf(t.id)>-1;
-    h+='<button class="opt'+(on?' on':'')+'" data-t="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
+    h+='<button class="opt'+(on?' on':'')+'" data-t="'+t.id+'" aria-pressed="'+on+'"><span>'+dot(t.c)+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
   h+='</div><p class="sub" id="two"'+(S.mode==='days'&&a.length>1?'':' hidden')+'>Сейчас день засчитывается один раз, сколько бы тренировок ни было. Чтобы считалась каждая, выбери в ⚙ «Каждую тренировку».</p><button class="btn" id="ok">Готово</button>';
   open(h);
 }
@@ -235,14 +327,19 @@ function setSheet(){
   h+='<div class="set"><label>Что считать</label><div class="seg"><button data-mode="days" class="'+(S.mode==='days'?'on':'')+'">Дни с активностью<small>две тренировки в день = 1</small></button><button data-mode="all" class="'+(S.mode==='all'?'on':'')+'">Каждую тренировку<small>две тренировки в день = 2</small></button></div></div>';
   h+='<p class="sect">Какие активности в списке</p><div class="opts">';
   TYPES.forEach(function(t){var on=S.enabled.indexOf(t.id)>-1;
-    h+='<button class="opt'+(on?' on':'')+'" data-e="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
-  h+='</div><button class="btn" id="ok">Готово</button>';
+    h+='<button class="opt'+(on?' on':'')+'" data-e="'+t.id+'" aria-pressed="'+on+'"><span>'+dot(t.c)+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
+  h+='</div>';
+  if(SHEET_URL)h+='<div class="set"><label>Имя для подруг</label><button class="btn" id="chname" style="background:var(--bg);color:var(--fg);border:1.5px solid var(--line)">'+(S.me&&S.me!=='-'?S.me+' · сменить':'Не показываю себя · выбрать имя')+'</button></div>';
+  h+='<button class="btn" id="ok">Готово</button>';
   open(h);
 }
 $('grid').addEventListener('click',function(e){var b=e.target.closest('.day');if(b&&b.dataset.d)daySheet(+b.dataset.d)});
 $('gear').addEventListener('click',setSheet);
 $('scrim').addEventListener('click',function(e){if(e.target===$('scrim')||e.target.id==='ok')close()});
 $('sheet').addEventListener('click',function(e){
+  var nb=e.target.closest('[data-name]');if(nb){setName(nb.dataset.name);return}
+  if(e.target.id==='oset'){var v=$('oname').value.trim();if(v)setName(v);return}
+  if(e.target.id==='chname'){nameSheet();return}
   var o=e.target.closest('.opt');
   if(o&&o.dataset.t){var k=key(openDay),a=S.days[k]||[],i=a.indexOf(o.dataset.t);
     if(i>-1)a.splice(i,1);else a.push(o.dataset.t);
@@ -256,6 +353,10 @@ $('sheet').addEventListener('click',function(e){
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('scrim').hidden)close()});
 
 render();
+if(SHEET_URL){
+  if(!S.me)nameSheet();else{if(!S.pushed&&S.me!=='-')pushAll();else if(S.dirty)push(Object.keys(S.dirty).map(function(k){return +k.slice(-2)}));loadTeam()}
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)loadTeam()});
+}
 </script>
 
 </body>
