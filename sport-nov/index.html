@@ -95,6 +95,7 @@ h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .seg button{min-height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg)}
 .seg button.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.seg small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
 .sect{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:6px 0 0}
 
 /* листопад: несколько листьев падают, когда день отмечен */
@@ -144,10 +145,13 @@ h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.
 var TYPES=[
  {id:'run',n:'Бег',r:'от 25 мин',s:'Бег',on:1},
  {id:'bike',n:'Велотренировка',r:'от 30 мин',s:'Вел',on:1},
+ {id:'cycle',n:'Сайкл',r:'от 30 мин, занятие на велотренажёре в студии',s:'Сайк',on:1},
  {id:'strength',n:'Силовая тренировка',r:'от 30 мин, в зале или дома',s:'Сил',on:1},
+ {id:'group',n:'Групповое занятие',r:'от 40 мин, любое занятие с тренером в группе',s:'Груп',on:1},
  {id:'walk',n:'Ходьба / прогулка',r:'10 000 шагов',s:'Шаг',on:1},
  {id:'yoga',n:'Йога',r:'от 25 мин',s:'Йога',on:1},
  {id:'lfk',n:'ЛФК',r:'от 20 мин',s:'ЛФК',on:1},
+ {id:'back',n:'Упражнения для спины',r:'от 15 мин',s:'Спин',on:1},
  {id:'stretch',n:'Растяжка / пилатес',r:'от 25 мин',s:'Рст',on:1},
  {id:'game',n:'Теннис, волейбол, командные игры',r:'от 30 мин',s:'Игр',on:1},
  {id:'tread',n:'Дорожка в гору',r:'от 30 мин · наклон от 10, бодрый шаг',s:'Дор',on:1},
@@ -160,6 +164,9 @@ var LEAVES=['var(--l1)','var(--l2)','var(--l4)','var(--l3)','var(--l5)'];
 var S={days:{},goal:21,enabled:null,mode:'days'};
 try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&typeof p==='object')S=Object.assign(S,p)}}catch(e){}
 if(!S.enabled)S.enabled=TYPES.filter(function(t){return t.on}).map(function(t){return t.id});
+/* пункты, добавленные после первого открытия, включаются сами; выключенные вручную не трогаем */
+if(!S.known)S.known=['run','bike','strength','walk','yoga','lfk','stretch','game','tread','rope'];
+TYPES.forEach(function(t){if(S.known.indexOf(t.id)<0){S.known.push(t.id);if(t.on&&S.enabled.indexOf(t.id)<0)S.enabled.push(t.id)}});
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function $(i){return document.getElementById(i)}
 function key(d){return Y+'-'+MM+'-'+(d<10?'0':'')+d}
@@ -219,13 +226,13 @@ function daySheet(d){
   TYPES.filter(function(t){return S.enabled.indexOf(t.id)>-1}).forEach(function(t){
     var on=a.indexOf(t.id)>-1;
     h+='<button class="opt'+(on?' on':'')+'" data-t="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
-  h+='</div><button class="btn" id="ok">Готово</button>';
+  h+='</div><p class="sub" id="two"'+(S.mode==='days'&&a.length>1?'':' hidden')+'>Сейчас день засчитывается один раз, сколько бы тренировок ни было. Чтобы считалась каждая, выбери в ⚙ «Каждую тренировку».</p><button class="btn" id="ok">Готово</button>';
   open(h);
 }
 function setSheet(){
   openDay=0;
   var h='<h2>Настройки</h2><div class="set"><label>Цель на месяц</label><div class="goal"><button id="gm" aria-label="Меньше">−</button><output id="gv">'+S.goal+'</output><button id="gp" aria-label="Больше">+</button></div></div>';
-  h+='<div class="set"><label>Что считать</label><div class="seg"><button data-mode="days" class="'+(S.mode==='days'?'on':'')+'">Дни с активностью</button><button data-mode="all" class="'+(S.mode==='all'?'on':'')+'">Каждую тренировку</button></div></div>';
+  h+='<div class="set"><label>Что считать</label><div class="seg"><button data-mode="days" class="'+(S.mode==='days'?'on':'')+'">Дни с активностью<small>две тренировки в день = 1</small></button><button data-mode="all" class="'+(S.mode==='all'?'on':'')+'">Каждую тренировку<small>две тренировки в день = 2</small></button></div></div>';
   h+='<p class="sect">Какие активности в списке</p><div class="opts">';
   TYPES.forEach(function(t){var on=S.enabled.indexOf(t.id)>-1;
     h+='<button class="opt'+(on?' on':'')+'" data-e="'+t.id+'" aria-pressed="'+on+'"><span>'+t.n+'<small>'+t.r+'</small></span><i>✓</i></button>'});
@@ -239,7 +246,8 @@ $('sheet').addEventListener('click',function(e){
   var o=e.target.closest('.opt');
   if(o&&o.dataset.t){var k=key(openDay),a=S.days[k]||[],i=a.indexOf(o.dataset.t);
     if(i>-1)a.splice(i,1);else a.push(o.dataset.t);
-    if(a.length)S.days[k]=a;else delete S.days[k];save();o.classList.toggle('on');o.setAttribute('aria-pressed',i<0);return}
+    if(a.length)S.days[k]=a;else delete S.days[k];save();o.classList.toggle('on');o.setAttribute('aria-pressed',i<0);
+    if($('two'))$('two').hidden=!(S.mode==='days'&&a.length>1);return}
   if(o&&o.dataset.e){var j=S.enabled.indexOf(o.dataset.e);if(j>-1)S.enabled.splice(j,1);else S.enabled.push(o.dataset.e);
     save();o.classList.toggle('on');o.setAttribute('aria-pressed',j<0);return}
   var m=e.target.closest('[data-mode]');if(m){S.mode=m.dataset.mode;save();setSheet();return}
