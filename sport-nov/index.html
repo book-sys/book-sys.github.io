@@ -123,6 +123,7 @@ h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.
 .lt .ln{height:7px;border-radius:99px;background:var(--accent-soft);margin:10px 0 4px;overflow:hidden}
 .lt .ln i{display:block;height:100%;border-radius:99px}
 .lt small{font-size:12px;color:var(--muted)}
+.tiny{margin:10px 0 0;text-align:center;font-size:12px;color:var(--muted);letter-spacing:.01em}
 .pills{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px}
 .pills span{background:var(--card);border-radius:99px;padding:5px 12px;font-size:12.5px;color:var(--muted);text-align:center}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lt:nth-child(2) b{color:#f0a060}}
@@ -237,13 +238,17 @@ function paceText(n){var goal=S.goal,cur=S.mode==='days'?n.d:n.w,left=goal-cur,d
   if(days<=0)return 'Месяц закончился, не хватило '+left+'.';
   var per=left/days;return 'До цели '+left+' '+(S.mode==='days'?plural(left,'день','дня','дней'):plural(left,'тренировка','тренировки','тренировок'))+'. '+(per>=1?'Нужно каждый день'+(per>1?', иногда по две':'')+'.':'Примерно каждый '+(per>=.5?'второй':Math.ceil(1/per)+'-й')+' день.')}
 var LEAFP='M50 4 L58 21 L69 15 L67 35 L85 27 L79 43 L96 45 L81 57 L87 66 L63 66 L61 77 L53 72 L52 97 L48 97 L47 72 L39 77 L37 66 L13 66 L19 57 L4 45 L21 43 L15 27 L33 35 L31 15 L42 21 Z';
+/* одна тихая строка под плитками: какой день месяца, сколько до цели и как часто заниматься */
+function progressLine(n){var goal=S.goal,left=goal-(S.mode==='days'?n.d:n.w),days=todayN>N?0:todayN<1?N:N-todayN+1,per=days?left/days:9;
+  var how=left<=0?'цель выполнена':days<=0?'месяц закончился':per>=1?'нужно каждый день':per>=.5?'примерно через день':'раз в '+Math.ceil(1/per)+' дня';
+  return 'День '+n.passed+' из '+N+(left>0?' · до цели '+left:'')+' · '+how}
 function renderHero(){
   var n=nums(),goal=S.goal;
   function tl(v,cap,sub,g1,g2){return '<div class="lt"><svg class="bgl" viewBox="0 0 100 100" aria-hidden="true"><path d="'+LEAFP+'" fill="'+g2+'"/></svg>'+
     '<b>'+v+'</b><span>'+cap+'</span><div class="ln"><i style="width:'+Math.min(100,v/goal*100)+'%;background:linear-gradient(90deg,'+g1+','+g2+')"></i></div><small>'+sub+'</small></div>'}
   $('hero').innerHTML='<div class="lts">'+tl(n.d,plural(n.d,'день','дня','дней')+' с активностью',n.d+' из '+goal,'#f0b04a','#b5501d')+
     tl(n.w,plural(n.w,'тренировка','тренировки','тренировок'),'за месяц','#f3c76a','#8c3b1a')+'</div>'+
-    '<div class="pills"><span>Прошло '+n.passed+' из '+N+' дней</span><span>'+paceText(n)+'</span></div>';
+    '<p class="tiny">'+progressLine(n)+'</p>';
 }
 
 function render(){
