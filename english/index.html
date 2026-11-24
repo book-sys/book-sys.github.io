@@ -262,6 +262,7 @@ function pushSheet(beacon){clearTimeout(sheetT);sheetT=null;if(!SHEET_URL||!shee
   fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:body.length<60000,headers:{'Content-Type':'text/plain;charset=utf-8'},body}).then(()=>{const n=new Date();$('sync').textContent='Saved on this device · sent to Google Sheets at '+n.getHours()+':'+pad(n.getMinutes())}).catch(()=>{sheetDirty=true})}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')pushSheet(true)});
 window.addEventListener('pagehide',()=>pushSheet(true));
+if(SHEET_URL)$('sync').textContent='Saved on this device · copy goes to Google Sheets';
 function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}sheetDirty=true;if(!sheetT)sheetT=setTimeout(pushSheet,30000);clearTimeout(saveT);saveT=setTimeout(push,1500)}
 async function push(){if(!db||writing)return;writing=true;try{await db.doc('progress/main').set({state:JSON.stringify(S),ts:S.ts});$('sync').textContent='Saved in Claude · synced across devices'}catch(e){$('sync').textContent='Saved on this device'}writing=false}
 
