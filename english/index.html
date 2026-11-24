@@ -248,7 +248,21 @@ let D={};try{D=JSON.parse($('content').textContent)}catch(e){}
 let S={pim:{},cur:'1-01',days:{},ans:{},lvl:1,ts:0};
 try{const s=JSON.parse(localStorage.getItem(KEY));if(s)S=Object.assign(S,s)}catch(e){}
 let db=null,saveT=null,writing=false;
-function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveT);saveT=setTimeout(push,1500)}
+const SHEET_URL='https://script.google.com/macros/s/AKfycbw-JcRsrclDt6rWJncNPPeWRvFU8NC7QJdlzLueiXS0a_JCPzyQb18qrT2HkGOgPfD7/exec';
+let sheetT=null,sheetDirty=false;
+function sheetPayload(){const t=today(),early=Object.keys(S.days).filter(k=>k<START).sort(),days=[];
+  for(let d=pd(early[0]||START);iso(d)<=t;d.setDate(d.getDate()+1)){const k=iso(d),day=S.days[k]||{},pl=PLAN[d.getDay()];
+    days.push([k,DN[d.getDay()],pl.filter(x=>day[x]).map(x=>C[x][0]).join(', '),pl.map(x=>C[x][0]+(OPT[x]?' (optional)':'')).join(', '),Math.round(dayScore(k)*100),dayMin(k)])}
+  days.reverse();
+  const pim=Object.keys(S.pim).sort().map(id=>{const x=S.pim[id]||{};return[lname(id),x.done?'так':'',!x.done&&x.t>5?fmt(x.t):'',x.note||'']}).filter(r=>r[1]||r[2]||r[3]);
+  const hw=[];(D.homework||[]).forEach(w=>{const a=S.ans[w.id]||{};(w.tasks||[]).forEach((q,i)=>hw.push([w.date||'',w.title||'',i+1,q.q||'',a[i]||'',a._done?'так':'']))});
+  return JSON.stringify({ts:S.ts||Date.now(),state:S,days,pim,hw})}
+function pushSheet(beacon){clearTimeout(sheetT);sheetT=null;if(!SHEET_URL||!sheetDirty)return;sheetDirty=false;const body=sheetPayload();
+  if(beacon&&navigator.sendBeacon){try{if(navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain;charset=utf-8'})))return}catch(e){}}
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:body.length<60000,headers:{'Content-Type':'text/plain;charset=utf-8'},body}).then(()=>{const n=new Date();$('sync').textContent='Saved on this device · sent to Google Sheets at '+n.getHours()+':'+pad(n.getMinutes())}).catch(()=>{sheetDirty=true})}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')pushSheet(true)});
+window.addEventListener('pagehide',()=>pushSheet(true));
+function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}sheetDirty=true;if(!sheetT)sheetT=setTimeout(pushSheet,30000);clearTimeout(saveT);saveT=setTimeout(push,1500)}
 async function push(){if(!db||writing)return;writing=true;try{await db.doc('progress/main').set({state:JSON.stringify(S),ts:S.ts});$('sync').textContent='Saved in Claude · synced across devices'}catch(e){$('sync').textContent='Saved on this device'}writing=false}
 
 const today=()=>iso(new Date());
