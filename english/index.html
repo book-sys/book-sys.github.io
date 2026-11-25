@@ -321,17 +321,20 @@ function renderPim(){const cur=L(S.cur);$('pimCur').textContent='Lesson '+lname(
   $('lvl').innerHTML=[1,2,3].map(l=>'<button data-l="'+l+'" class="'+(S.lvl==l?'on':'')+'">Level '+['','I','II','III'][l]+'</button>').join('');
   $('lvl').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.lvl=+b.dataset.l;save();renderPim()});
   let g='';for(let i=1;i<=30;i++){const id=S.lvl+'-'+pad(i),x=S.pim[id]||{};g+='<button class="ls'+(x.done?' done':x.t>5?' part':'')+(id===S.cur?' cur':'')+'" data-id="'+id+'">'+i+'</button>'}
-  $('grid').innerHTML=g;$('grid').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.id!==S.cur){S.cur=b.dataset.id;save();aud.pause();aud.removeAttribute('src');$('pimPlayer').classList.add('hide');renderAll()}})}
+  $('grid').innerHTML=g;$('grid').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.id!==S.cur){keepPos();stopAudio();S.cur=b.dataset.id;save();$('pimPlayer').classList.add('hide');renderAll()}})}
 $('pimPick').onclick=()=>$('pimFile').click();
-$('pimFile').onchange=function(){const f=this.files[0];if(!f)return;const c=L(S.cur);aud.src=URL.createObjectURL(f);$('pimName').textContent=f.name;$('pimPlayer').classList.remove('hide');
-  aud.onloadedmetadata=()=>{if(c.t>5&&c.t<aud.duration-5)aud.currentTime=c.t;aud.play().catch(()=>{})};this.value=''};
-aud.ontimeupdate=()=>{const c=L(S.cur);c.t=aud.currentTime;const n=Date.now();if(n-lastSave>5000){lastSave=n;save();$('pimPos').textContent=posText()}};
-aud.onpause=()=>{L(S.cur).t=aud.currentTime;save();$('pimPos').textContent=posText()};
-aud.onended=()=>{const c=L(S.cur);c.done=true;c.t=0;markToday('pim');save();toast('Lesson finished!');renderAll()};
+let playId=null,ready=false;
+function stopAudio(){ready=false;playId=null;try{aud.pause()}catch(e){}aud.removeAttribute('src');try{aud.load()}catch(e){}}
+function keepPos(){if(!ready||!playId)return;const t=aud.currentTime;if(!(t>0))return;const c=L(playId);if(!c.done)c.t=t}
+$('pimFile').onchange=function(){const f=this.files[0];if(!f)return;stopAudio();const id=S.cur,c=L(id);aud.src=URL.createObjectURL(f);$('pimName').textContent=f.name;$('pimPlayer').classList.remove('hide');
+  aud.onloadedmetadata=()=>{if(c.t>5&&c.t<aud.duration-5)aud.currentTime=c.t;playId=id;ready=true;aud.play().catch(()=>{})};this.value=''};
+aud.ontimeupdate=()=>{keepPos();const n=Date.now();if(ready&&n-lastSave>5000){lastSave=n;save();$('pimPos').textContent=posText()}};
+aud.onpause=()=>{keepPos();save();$('pimPos').textContent=posText()};
+aud.onended=()=>{if(!playId)return;const c=L(playId);ready=false;c.done=true;c.t=0;markToday('pim');save();toast('Lesson finished!');renderAll()};
 $('back10').onclick=()=>{aud.currentTime=Math.max(0,aud.currentTime-10)};
 $('fwd10').onclick=()=>{aud.currentTime+=10};
 const SP=[1,0.9,0.8,1.1];$('spd').onclick=function(){const i=(SP.indexOf(aud.playbackRate)+1)%SP.length;aud.playbackRate=SP[i];this.textContent=SP[i]+'×'};
-$('pimDone').onclick=()=>{const c=L(S.cur);c.done=!c.done;if(c.done){c.t=0;markToday('pim');aud.pause();const nx=nextId(S.cur);if(nx!==S.cur){S.cur=nx;S.lvl=+nx.split('-')[0];$('pimPlayer').classList.add('hide');toast('Next: lesson '+lname(nx))}}save();renderAll()};
+$('pimDone').onclick=()=>{const c=L(S.cur);if(!c.done)keepPos();c.done=!c.done;if(c.done){c.t=0;markToday('pim');stopAudio();const nx=nextId(S.cur);if(nx!==S.cur){S.cur=nx;S.lvl=+nx.split('-')[0];$('pimPlayer').classList.add('hide');toast('Next: lesson '+lname(nx))}}save();renderAll()};
 $('pimNote').oninput=function(){L(S.cur).note=this.value;save()};
 
 function renderHw(){const H=D.homework||[];
