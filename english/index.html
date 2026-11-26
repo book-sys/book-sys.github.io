@@ -80,6 +80,7 @@ audio{width:100%;margin-top:10px}
 .ls{aspect-ratio:1;border-radius:12px;border:2px solid var(--ln);background:none;color:var(--ink);font-weight:700;font-size:14px;position:relative}
 .ls.done{background:var(--pim);border-color:var(--pim);color:#fff}
 .ls.cur{border-color:var(--coral);border-width:3px}
+.ls.has::before{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--sea)}.ls.done.has::before{background:#fff}
 .ls.part::after{content:"";position:absolute;left:7px;right:7px;bottom:6px;height:3px;border-radius:2px;background:var(--coral)}
 textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12px;padding:9px 11px;font:16px/1.45 inherit;font-family:inherit;background:var(--bg);color:var(--ink);margin-top:6px}
 .q{padding:12px 0;border-top:1px solid var(--ln)}.q:first-of-type{border-top:0}
@@ -150,15 +151,16 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
     <div class="m">Now playing</div>
     <div class="big" id="pimCur"></div>
     <div class="m" id="pimPos"></div>
-    <input type="file" id="pimFile" accept="audio/*,.mp3,.m4a" class="hide">
-    <button class="btn" id="pimPick">Choose lesson file</button>
+    <input type="file" id="pimFile" accept="audio/*,.mp3,.m4a" multiple class="hide">
+    <button class="btn" id="pimPick">Add lesson files (mp3)</button>
+    <div class="m" id="pimSaved" style="margin-top:6px"></div>
     <div id="pimPlayer" class="hide">
       <div class="m" id="pimName" style="margin-top:8px"></div>
       <audio id="aud" controls preload="metadata"></audio>
       <div class="btns">
-        <button class="btn sec" id="back10">−10 s</button>
+        <button class="btn sec" id="back10">−20 s</button>
         <button class="btn sec" id="spd">1×</button>
-        <button class="btn sec" id="fwd10">+10 s</button>
+        <button class="btn sec" id="fwd10">+20 s</button>
       </div>
     </div>
     <button class="btn sec" id="pimDone">Lesson finished ✓</button>
@@ -168,7 +170,7 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
     <h2>All lessons</h2>
     <div class="lvl" id="lvl"></div>
     <div class="grid" id="grid"></div>
-    <div class="m" style="margin-top:10px">Tap a lesson to make it current. A line underneath means started but not finished.</div>
+    <div class="m" style="margin-top:10px">Tap a lesson to make it current. A line underneath means started but not finished. A dot means the lesson file is saved on this phone.</div>
   </div>
 </section>
 
@@ -320,21 +322,52 @@ function renderPim(){const cur=L(S.cur);$('pimCur').textContent='Lesson '+lname(
   $('pimNote').value=cur.note||'';$('pimDone').textContent=cur.done?'Mark as not finished':'Lesson finished ✓';
   $('lvl').innerHTML=[1,2,3].map(l=>'<button data-l="'+l+'" class="'+(S.lvl==l?'on':'')+'">Level '+['','I','II','III'][l]+'</button>').join('');
   $('lvl').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.lvl=+b.dataset.l;save();renderPim()});
-  let g='';for(let i=1;i<=30;i++){const id=S.lvl+'-'+pad(i),x=S.pim[id]||{};g+='<button class="ls'+(x.done?' done':x.t>5?' part':'')+(id===S.cur?' cur':'')+'" data-id="'+id+'">'+i+'</button>'}
-  $('grid').innerHTML=g;$('grid').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.id!==S.cur){keepPos();stopAudio();S.cur=b.dataset.id;save();$('pimPlayer').classList.add('hide');renderAll()}})}
+  let g='';for(let i=1;i<=30;i++){const id=S.lvl+'-'+pad(i),x=S.pim[id]||{};g+='<button class="ls'+(x.done?' done':x.t>5?' part':'')+(id===S.cur?' cur':'')+(HAS.has(id)?' has':'')+'" data-id="'+id+'">'+i+'</button>'}
+  $('grid').innerHTML=g;$('grid').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.id!==S.cur){keepPos();stopAudio();S.cur=b.dataset.id;save();renderAll();loadCur()}});
+  $('pimSaved').textContent=HAS.size?'Saved on this phone: '+HAS.size+' lesson file'+(HAS.size>1?'s':'')+(HAS.has(S.cur)?'':' · no file for this lesson yet'):'';
+  $('pimPick').textContent=HAS.has(S.cur)?'Add more lesson files':'Add lesson files (mp3)'}
 $('pimPick').onclick=()=>$('pimFile').click();
-let playId=null,ready=false;
-function stopAudio(){ready=false;playId=null;try{aud.pause()}catch(e){}aud.removeAttribute('src');try{aud.load()}catch(e){}}
+const SKIP=20;let playId=null,ready=false,pendingId=null,objUrl=null,HAS=new Set(),idb=null;
+function idbOpen(){if(idb)return Promise.resolve(idb);return new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('no idb'));const r=indexedDB.open('english-audio',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>{idb=r.result;res(idb)};r.onerror=()=>rej(r.error)})}
+function idbDo(mode,fn){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files',mode),q=fn(tx.objectStore('files'));let out;if(q)q.onsuccess=()=>{out=q.result};tx.oncomplete=()=>res(out);tx.onerror=tx.onabort=()=>rej(tx.error)}))}
+const fileGet=id=>idbDo('readonly',st=>st.get(id)).catch(()=>null);
+const fileDel=id=>idbDo('readwrite',st=>st.delete(id)).catch(()=>{});
+function refreshHas(){return idbDo('readonly',st=>st.getAllKeys()).catch(()=>[]).then(k=>{HAS=new Set(k||[]);renderPim()})}
+function idFromName(n){let m=n.match(/(?:^|[^A-Za-z])(I{1,3})[ _.\-]+0*(\d{1,2})(?!\d)/);if(m)return m[1].length+'-'+pad(+m[2]);
+  m=n.match(/level\s*([1-3])\D{0,20}?(?:lesson|unit|урок)\s*0*(\d{1,2})(?!\d)/i);if(m)return m[1]+'-'+pad(+m[2]);return null}
+async function filePut(id,f){const buf=await f.arrayBuffer(),rec={buf,type:f.type||'audio/mpeg',name:f.name,ts:Date.now()};
+  try{await idbDo('readwrite',st=>st.put(rec,id))}catch(e){for(const k of HAS){if(k!==S.cur&&k!==id&&(S.pim[k]||{}).done)await fileDel(k)}await idbDo('readwrite',st=>st.put(rec,id))}}
+function stopAudio(){ready=false;playId=null;pendingId=null;try{aud.pause()}catch(e){}aud.removeAttribute('src');try{aud.load()}catch(e){}if(objUrl){URL.revokeObjectURL(objUrl);objUrl=null}}
 function keepPos(){if(!ready||!playId)return;const t=aud.currentTime;if(!(t>0))return;const c=L(playId);if(!c.done)c.t=t}
-$('pimFile').onchange=function(){const f=this.files[0];if(!f)return;stopAudio();const id=S.cur,c=L(id);aud.src=URL.createObjectURL(f);$('pimName').textContent=f.name;$('pimPlayer').classList.remove('hide');
-  aud.onloadedmetadata=()=>{if(c.t>5&&c.t<aud.duration-5)aud.currentTime=c.t;playId=id;ready=true;aud.play().catch(()=>{})};this.value=''};
+function arm(){if(ready||!pendingId)return;const c=L(pendingId);if(c.t>5&&isFinite(aud.duration)&&c.t<aud.duration-5)aud.currentTime=c.t;playId=pendingId;ready=true}
+function mediaMeta(id){try{if('mediaSession' in navigator)navigator.mediaSession.metadata=new MediaMetadata({title:'Pimsleur '+lname(id),artist:'English',artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}]})}catch(e){}}
+async function loadCur(){const id=S.cur;const r=await fileGet(id);if(id!==S.cur)return;stopAudio();
+  if(!r||!r.buf){$('pimPlayer').classList.add('hide');return}
+  objUrl=URL.createObjectURL(new Blob([r.buf],{type:r.type||'audio/mpeg'}));pendingId=id;aud.src=objUrl;try{aud.load()}catch(e){}
+  $('pimName').textContent=r.name||'';$('pimPlayer').classList.remove('hide');mediaMeta(id)}
+$('pimFile').onchange=async function(){const files=[...this.files];this.value='';if(!files.length)return;
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+  const ok=[],skipped=[];toast('Saving…');
+  for(const f of files){const id=idFromName(f.name)||(files.length===1?S.cur:null);if(!id){skipped.push(f.name);continue}
+    try{await filePut(id,f);ok.push(id)}catch(e){toast('Not enough space on the phone');break}}
+  await refreshHas();
+  if(ok.length)toast('Saved: '+ok.sort().map(lname).join(', ')+(skipped.length?' · not recognised: '+skipped.length:''));
+  else if(skipped.length)toast('Could not tell which lesson — open the lesson first, then add one file');
+  if(ok.includes(S.cur))loadCur()};
+aud.addEventListener('loadedmetadata',arm);
+aud.onplay=()=>{if(!ready&&aud.readyState>=1)arm()};
 aud.ontimeupdate=()=>{keepPos();const n=Date.now();if(ready&&n-lastSave>5000){lastSave=n;save();$('pimPos').textContent=posText()}};
 aud.onpause=()=>{keepPos();save();$('pimPos').textContent=posText()};
 aud.onended=()=>{if(!playId)return;const c=L(playId);ready=false;c.done=true;c.t=0;markToday('pim');save();toast('Lesson finished!');renderAll()};
-$('back10').onclick=()=>{aud.currentTime=Math.max(0,aud.currentTime-10)};
-$('fwd10').onclick=()=>{aud.currentTime+=10};
+function skip(d){if(!aud.src||!ready)return;const end=isFinite(aud.duration)?aud.duration-1:aud.currentTime+d;aud.currentTime=Math.max(0,Math.min(end,aud.currentTime+d));keepPos();save();$('pimPos').textContent=posText()}
+$('back10').onclick=()=>skip(-SKIP);
+$('fwd10').onclick=()=>skip(SKIP);
+try{const ms=navigator.mediaSession;ms.setActionHandler('seekbackward',()=>skip(-SKIP));ms.setActionHandler('seekforward',()=>skip(SKIP));ms.setActionHandler('play',()=>aud.play());ms.setActionHandler('pause',()=>aud.pause())}catch(e){}
+function holdPos(){keepPos();save();pushSheet(true)}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')holdPos()});
+window.addEventListener('pagehide',holdPos);
 const SP=[1,0.9,0.8,1.1];$('spd').onclick=function(){const i=(SP.indexOf(aud.playbackRate)+1)%SP.length;aud.playbackRate=SP[i];this.textContent=SP[i]+'×'};
-$('pimDone').onclick=()=>{const c=L(S.cur);if(!c.done)keepPos();c.done=!c.done;if(c.done){c.t=0;markToday('pim');stopAudio();const nx=nextId(S.cur);if(nx!==S.cur){S.cur=nx;S.lvl=+nx.split('-')[0];$('pimPlayer').classList.add('hide');toast('Next: lesson '+lname(nx))}}save();renderAll()};
+$('pimDone').onclick=()=>{const c=L(S.cur);if(!c.done)keepPos();c.done=!c.done;if(c.done){c.t=0;markToday('pim');stopAudio();const nx=nextId(S.cur);if(nx!==S.cur){S.cur=nx;S.lvl=+nx.split('-')[0];toast('Next: lesson '+lname(nx))}}save();renderAll();if(!aud.src)loadCur()};
 $('pimNote').oninput=function(){L(S.cur).note=this.value;save()};
 
 function renderHw(){const H=D.homework||[];
@@ -371,6 +404,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.query
 function renderAll(){header();renderToday();renderTrack();renderPim();renderHw();renderBb()}
 try{const c=JSON.parse(localStorage.getItem(KEY+'-data'));if(c)D=c}catch(e){}
 renderAll();
+refreshHas().then(loadCur);
 function pull(){fetch('data.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;D=j;try{localStorage.setItem(KEY+'-data',JSON.stringify(j))}catch(e){}renderAll()}).catch(()=>{})}
 pull();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
