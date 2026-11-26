@@ -170,6 +170,7 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
       <div class="txt" id="ptView" style="white-space:pre-wrap;margin-top:12px"></div>
       <textarea id="ptEdit" class="hide" placeholder="Paste or type the lesson text here. It is saved only on this phone." style="min-height:220px"></textarea>
       <button class="btn sec" id="ptBtn">Edit text</button>
+      <button class="btn sec" id="ptKey">Connect texts from Google Sheet</button>
     </div>
   </div>
   <div class="card">
@@ -375,12 +376,18 @@ window.addEventListener('pagehide',holdPos);
 const SP=[1,0.9,0.8,1.1];$('spd').onclick=function(){const i=(SP.indexOf(aud.playbackRate)+1)%SP.length;aud.playbackRate=SP[i];this.textContent=SP[i]+'×'};
 $('pimDone').onclick=()=>{const c=L(S.cur);if(!c.done)keepPos();c.done=!c.done;if(c.done){c.t=0;markToday('pim');stopAudio();const nx=nextId(S.cur);if(nx!==S.cur){S.cur=nx;S.lvl=+nx.split('-')[0];toast('Next: lesson '+lname(nx))}}save();renderAll();if(!aud.src)loadCur()};
 $('pimNote').oninput=function(){L(S.cur).note=this.value;save()};
-let ptEditing=false;
-function renderPt(cur){const t=cur.text||'',open=!!S.ptOpen,ed=ptEditing||!t;
+let ptEditing=false,TX={};try{TX=JSON.parse(localStorage.getItem(KEY+'-texts'))||{}}catch(e){}
+const txKey=()=>{try{return localStorage.getItem(KEY+'-key')||''}catch(e){return ''}};
+function pullTexts(){const k=txKey();if(!SHEET_URL||!k)return;
+  fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'texts',key:k})}).then(r=>r.json()).then(j=>{
+    if(j&&j.ok){TX=j.texts||{};try{localStorage.setItem(KEY+'-texts',JSON.stringify(TX))}catch(e){}renderPt(L(S.cur))}
+    else if(j&&j.error==='key'){try{localStorage.removeItem(KEY+'-key')}catch(e){}toast('Wrong code — check the sheet «Налаштування»');renderPt(L(S.cur))}}).catch(()=>{})}
+$('ptKey').onclick=()=>{const k=(prompt('Code from the Google Sheet, tab «Налаштування», cell B1')||'').trim();if(!k)return;try{localStorage.setItem(KEY+'-key',k)}catch(e){}toast('Loading texts…');pullTexts()};
+function renderPt(cur){const t=cur.text||TX[S.cur]||'',open=!!S.ptOpen,ed=ptEditing||!t;
   $('ptToggle').textContent=(open?'Hide':'Show')+' lesson text'+(t?'':' · empty');$('ptBox').classList.toggle('hide',!open);
   $('ptView').classList.toggle('hide',ed);$('ptView').textContent=t;
   $('ptEdit').classList.toggle('hide',!ed);if(document.activeElement!==$('ptEdit'))$('ptEdit').value=t;
-  $('ptBtn').textContent=ed?'Done':'Edit text';$('ptBtn').classList.toggle('hide',ed&&!t)}
+  $('ptBtn').textContent=ed?'Done':'Edit text';$('ptBtn').classList.toggle('hide',ed&&!t);$('ptKey').classList.toggle('hide',!SHEET_URL||!!txKey())}
 $('ptToggle').onclick=()=>{S.ptOpen=!S.ptOpen;ptEditing=false;save();renderPt(L(S.cur))};
 $('ptBtn').onclick=()=>{ptEditing=$('ptEdit').classList.contains('hide');renderPt(L(S.cur));if(ptEditing)$('ptEdit').focus()};
 $('ptEdit').oninput=function(){L(S.cur).text=this.value;save();$('ptBtn').classList.remove('hide');$('ptBtn').textContent='Done';$('ptToggle').textContent='Hide lesson text'+(this.value?'':' · empty')};
@@ -421,12 +428,12 @@ function renderAll(){header();renderToday();renderTrack();renderPim();renderHw()
 try{const c=JSON.parse(localStorage.getItem(KEY+'-data'));if(c)D=c}catch(e){}
 renderAll();
 refreshHas().then(loadCur);
-const APP_VER='2026-11-26c';
+const APP_VER='2026-11-26d';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
   Promise.all([fetch('./',{cache:'reload'}),fetch('index.html',{cache:'reload'})].map(x=>x.catch(()=>{}))).then(()=>location.reload())}).catch(()=>{})}catch(e){}}
-checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});
+checkUpdate();pullTexts();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){checkUpdate();pullTexts()}});
 function pull(){fetch('data.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;D=j;try{localStorage.setItem(KEY+'-data',JSON.stringify(j))}catch(e){}renderAll()}).catch(()=>{})}
 pull();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
