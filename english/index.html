@@ -421,6 +421,12 @@ function renderAll(){header();renderToday();renderTrack();renderPim();renderHw()
 try{const c=JSON.parse(localStorage.getItem(KEY+'-data'));if(c)D=c}catch(e){}
 renderAll();
 refreshHas().then(loadCur);
+const APP_VER='2026-11-26c';
+function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
+  if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
+  try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
+  Promise.all([fetch('./',{cache:'reload'}),fetch('index.html',{cache:'reload'})].map(x=>x.catch(()=>{}))).then(()=>location.reload())}).catch(()=>{})}catch(e){}}
+checkUpdate();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});
 function pull(){fetch('data.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;D=j;try{localStorage.setItem(KEY+'-data',JSON.stringify(j))}catch(e){}renderAll()}).catch(()=>{})}
 pull();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
