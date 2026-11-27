@@ -25,7 +25,8 @@
 .heroCard .cap{padding:6px 18px 14px;display:flex;flex-direction:column}
 .heroCard .cap b{font-family:var(--hf);font-size:28px;font-weight:var(--hw)}
 
-*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{touch-action:manipulation}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--bf);overflow-x:clip;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .top{background:var(--top);color:var(--topink);padding:calc(22px + env(safe-area-inset-top)) 18px 70px}
 .top h1{margin:0;font-size:var(--h1s,32px);line-height:1.05;font-weight:var(--hw,800);font-family:var(--hf);letter-spacing:var(--hls,-.5px)}
@@ -485,8 +486,11 @@ function audLookup(keys){keys=[...new Set(keys.filter(k=>k&&!(k in AUD)))].slice
       try{localStorage.setItem(KEY+'-aud2',JSON.stringify(AUD))}catch(e){}}).catch(()=>{})}
 function wordAudio(w){const k=audKey(w);if(!k)return Promise.resolve('');if(k in AUD)return Promise.resolve(AUD[k]);
   if(!audBatch)audBatch=audLookup((wSess||[w]).concat([w]).map(audKey)).finally(()=>{audBatch=null});return audBatch.then(()=>AUD[k]||'')}
-const WA=new Audio();
-function playWord(w,slow){const u=AUD[audKey(w)];if(!u)return;try{WA.pause()}catch(e){}WA.src=u;try{WA.preservesPitch=true;WA.webkitPreservesPitch=true}catch(e){}WA.playbackRate=slow?0.6:1;WA.play().then(()=>{WA.playbackRate=slow?0.6:1}).catch(()=>{})}
+const AC={};let WA=null;
+function getA(u){if(!AC[u]){const a=new Audio();a.preload='auto';a.src=u;try{a.load()}catch(e){}AC[u]=a}return AC[u]}
+function preloadWord(w){const u=w&&AUD[audKey(w)];if(u)getA(u)}
+function playWord(w,slow){const u=AUD[audKey(w)];if(!u)return;try{WA&&WA.pause()}catch(e){}const a=getA(u);WA=a;try{a.preservesPitch=true;a.webkitPreservesPitch=true}catch(e){}
+  try{a.currentTime=0}catch(e){}a.playbackRate=slow?0.6:1;a.play().then(()=>{a.playbackRate=slow?0.6:1}).catch(()=>{})}
 function wStart(){const q=wQueue();wSess=q.due.concat(q.nw);wIdx=0;wFlip=false;wDone=0;wAgain=new Set();if(wSess.length)wordAudio(wSess[0])}
 function renderWords(){const q=wQueue(),box=$('wCard');
   $('wStats').innerHTML='<div class="stats"><div><b>'+q.due.length+'</b><span class="lab">повторити</span></div><div><b>'+q.nw.length+'</b><span class="lab">нових сьогодні</span></div><div><b>'+q.learned+' / '+q.all.length+'</b><span class="lab">вивчено</span></div></div>';
@@ -507,6 +511,7 @@ function renderWords(){const q=wQueue(),box=$('wCard');
     '<div class="btns"><button class="btn sec" id="wNo">Не пам’ятаю</button><button class="btn" id="wYes">Знаю</button></div>'}
   box.innerHTML=h;
   box.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>playWord(w,!!b.dataset.slow));
+  if(url){preloadWord(w);const nx=wSess[wIdx+1];if(nx)preloadWord(q.all.find(x=>x.id===nx.id)||nx)}
   if(!known){const id=w.id;wordAudio(w).then(()=>{const c=wSess&&wSess[wIdx];if(c&&c.id===id)renderWords()})}
   if(!wFlip){$('wShow').onclick=()=>{wFlip=true;renderWords();playWord(w)}}
   else{const grade=ok=>{if(wPractice){wIdx++;wFlip=false;renderWords();return}const ws=wSt(),t=today(),st=ws[w.id]||(ws[w.id]={box:0,n:0,ok:0,bad:0,first:t});st.n++;
@@ -525,7 +530,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-27j';
+const APP_VER='2026-11-27k';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
