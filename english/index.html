@@ -462,7 +462,7 @@ function renderWords(){const q=wQueue(),box=$('wCard');
   if(wIdx>=wSess.length){const nx=Object.values(wSt()).map(x=>x.due).filter(d=>d>today()).sort()[0];
     box.innerHTML='<h2>На сьогодні все ✓</h2><div class="m">'+(wDone?'Пройдено карток: '+wDone+'. ':'')+(nx?'Наступне повторення: '+esc(nx.split('-').reverse().slice(0,2).join('.'))+'.':'')+'</div><button class="btn sec" id="wAgain">Перевірити нові картки</button>';
     $('wAgain').onclick=()=>{wSess=null;renderWords()};return}
-  const w=wSess[wIdx],s=wSt()[w.id]||{box:0,n:0},ru=s.box>=2&&s.n%2===1;
+  const w0=wSess[wIdx],w=q.all.find(x=>x.id===w0.id)||w0,s=wSt()[w.id]||{box:0,n:0},ru=s.box>=2&&s.n%2===1;
   const say='<button class="wsay" data-say="1" aria-label="Listen">🔊</button>';
   let h='<div class="m" style="text-align:center">'+(wIdx+1)+' з '+wSess.length+(s.n?'':' · нове слово')+'</div>';
   if(!wFlip){h+=ru?'<div class="wfront">'+esc(w.ru)+'</div><div class="m" style="text-align:center">Скажи англійською</div>'
@@ -486,7 +486,7 @@ function renderAll(){header();renderToday();renderTrack();renderPim();renderHw()
 try{const c=JSON.parse(localStorage.getItem(KEY+'-data'));if(c)D=c}catch(e){}
 renderAll();
 refreshHas().then(loadCur);
-const APP_VER='2026-11-27b';
+const APP_VER='2026-11-27c';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
