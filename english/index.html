@@ -10,16 +10,16 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="English">
-<meta name="theme-color" content="#4A1D5C">
+<meta name="theme-color" content="#463CA6">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <style>
 /* VOICE: adventurous but gentle. IDEA: a mountain hike — each study day is a step up the trail, a flag every 10 days. PICTURE: layered pastel mountains, a dotted trail and a hiker dot. COLOUR/TYPE: dusk peach, lilac and blue ridges, flag red; Outfit. LAYOUT: one column. */
-:root{color-scheme:light dark;--hf:Outfit,system-ui,sans-serif;--bf:Outfit,system-ui,sans-serif;--hw:800;--h1s:36px;--h2s:24px;--hls:0;--bg:light-dark(#f6f2f4,#14121a);--card:light-dark(#fff,#1e1b26);--ink:light-dark(#2b2340,#eeeaf6);--mu:light-dark(#76708c,#a8a1bd);--ln:light-dark(#ebe4ec,#2e2a38);--top:light-dark(#4A1D5C,#36144A);--topink:#fff;--coral:#C8A24A;--coralD:light-dark(#9C7A2A,#E3C77A);--sea:light-dark(#4A1D5C,#D2B3DC);--sun:#ffb86b;--pim:#2fb4a8;--okbg:light-dark(#F6EEF7,#262241);--s0:light-dark(#efe9f0,#25212e);--s1:light-dark(#EBDDEF,#3a3466);--s2:light-dark(#9F78AE,#5b51b8);--s3:light-dark(#4A1D5C,#9F78AE)}
+:root{color-scheme:light dark;--hf:Outfit,system-ui,sans-serif;--bf:Outfit,system-ui,sans-serif;--hw:800;--h1s:36px;--h2s:24px;--hls:0;--bg:light-dark(#f6f2f4,#14121a);--card:light-dark(#fff,#1e1b26);--ink:light-dark(#2b2340,#eeeaf6);--mu:light-dark(#76708c,#a8a1bd);--ln:light-dark(#ebe4ec,#2e2a38);--top:light-dark(#463CA6,#322A80);--topink:#fff;--coral:#C8A24A;--coralD:light-dark(#9C7A2A,#E3C77A);--sea:light-dark(#463CA6,#B3ABF2);--sun:#ffb86b;--pim:#2fb4a8;--okbg:light-dark(#EFEDFB,#262241);--s0:light-dark(#efe9f0,#25212e);--s1:light-dark(#DDD9F6,#3a3466);--s2:light-dark(#9C93DD,#5b51b8);--s3:light-dark(#463CA6,#9C93DD)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
-.t-lesson,.t-hw{background:#4A1D5C}.t-bb{background:#C8A24A}.t-pim{background:#2fb4a8}
-.chk.on{background:#4A1D5C;border-color:#4A1D5C}
+.t-lesson,.t-hw{background:#463CA6}.t-bb{background:#C8A24A}.t-pim{background:#2fb4a8}
+.chk.on{background:#463CA6;border-color:#463CA6}
 .heroCard{background:var(--card);border-radius:22px;box-shadow:0 12px 30px -14px rgba(0,0,0,.3);overflow:hidden}
 .heroCard .fig{position:relative}.heroCard svg{position:absolute;inset:0;width:100%;height:100%}
 .heroCard .cap{padding:6px 18px 14px;display:flex;flex-direction:column}
@@ -242,10 +242,10 @@ function DAYS(){const out=[];const t=today();for(let d=pd(START);iso(d)<=t;d.set
 function RND(s){let x=s||7;return()=>{x=(x*16807)%2147483647;return x/2147483647}}
 function CARD(H,W,svg,cap,sub){return '<div class="heroCard"><div class="fig" style="height:'+H+'px"><svg viewBox="0 0 '+W+' '+H+'" aria-hidden="true">'+svg+'</svg></div><div class="cap"><span>'+cap+'</span><span class="m">'+sub+'</span></div></div>'}
 const DONE_MSG='Ще на крок вище ⛰️';
-function HERO(st,W){const H=236,n=st.days,goal=Math.max(60,Math.ceil((n+1)/30)*30);let g='<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9c7"/><stop offset="1" stop-color="#f3e7f2"/></linearGradient></defs><rect width="'+W+'" height="'+H+'" fill="url(#sk)"/><circle cx="'+(W*.78)+'" cy="58" r="24" fill="#ffb86b"/>';
- g+='<path d="M0 150 L'+(W*.25)+' 80 L'+(W*.45)+' 130 L'+(W*.7)+' 40 L'+W+' 120 V'+H+' H0Z" fill="#C2A3CC"/>';
+function HERO(st,W){const H=236,n=st.days,goal=Math.max(60,Math.ceil((n+1)/30)*30);let g='<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9c7"/><stop offset="1" stop-color="#efe9fb"/></linearGradient></defs><rect width="'+W+'" height="'+H+'" fill="url(#sk)"/><circle cx="'+(W*.78)+'" cy="58" r="24" fill="#ffb86b"/>';
+ g+='<path d="M0 150 L'+(W*.25)+' 80 L'+(W*.45)+' 130 L'+(W*.7)+' 40 L'+W+' 120 V'+H+' H0Z" fill="#ADA5E6"/>';
  g+='<path d="M'+(W*.62)+' 62 L'+(W*.7)+' 40 L'+(W*.78)+' 66 L'+(W*.74)+' 60 L'+(W*.7)+' 70 L'+(W*.66)+' 58Z" fill="#fff"/>';
- g+='<path d="M0 190 L'+(W*.3)+' 140 L'+(W*.55)+' 175 L'+(W*.8)+' 135 L'+W+' 165 V'+H+' H0Z" fill="#7A4B8C"/><path d="M0 215 Q'+(W*.5)+' 185 '+W+' 210 V'+H+' H0Z" fill="#4A1D5C"/>';
+ g+='<path d="M0 190 L'+(W*.3)+' 140 L'+(W*.55)+' 175 L'+(W*.8)+' 135 L'+W+' 165 V'+H+' H0Z" fill="#7468C9"/><path d="M0 215 Q'+(W*.5)+' 185 '+W+' 210 V'+H+' H0Z" fill="#463CA6"/>';
  const path=[[W*.08,H-12],[W*.3,H-40],[W*.22,H-70],[W*.45,H-100],[W*.38,H-130],[W*.6,H-150],[W*.7,H-196]];
  let d='M'+path[0].join(' ');for(let i=1;i<path.length;i++)d+=' L'+path[i].join(' ');g+='<path d="'+d+'" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="3 6" stroke-linecap="round"/>';
  const seg=[];let tot=0;for(let i=1;i<path.length;i++){const l=Math.hypot(path[i][0]-path[i-1][0],path[i][1]-path[i-1][1]);seg.push(l);tot+=l}
@@ -486,7 +486,7 @@ function renderAll(){header();renderToday();renderTrack();renderPim();renderHw()
 try{const c=JSON.parse(localStorage.getItem(KEY+'-data'));if(c)D=c}catch(e){}
 renderAll();
 refreshHas().then(loadCur);
-const APP_VER='2026-11-27c';
+const APP_VER='2026-11-27d';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
