@@ -94,6 +94,7 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
 .wback{font-size:24px;text-align:center;color:var(--sea);font-weight:700;margin-top:10px}
 .wex{font-size:17px;text-align:center;color:var(--ink);margin:10px 0 4px;font-style:italic}
 .wsay{width:52px;height:52px;border-radius:50%;border:2px solid var(--ln);background:none;font-size:22px;margin:6px auto}
+.vsel{font:inherit;font-size:14px;border:1px solid var(--ln);border-radius:10px;padding:6px 8px;background:var(--bg);color:var(--ink);max-width:62%}
 .wsay.sm{width:36px;height:36px;font-size:16px;margin:0 0 0 4px;vertical-align:middle}
 .hide{display:none!important}
 .sync{font-size:12px;color:var(--mu);text-align:center;margin:14px 0 4px}
@@ -199,6 +200,8 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
   <div class="card">
     <h2>Як це працює</h2>
     <div class="m">Слова беруться з домашки. Спершу скажи слово вголос, потім натисни 🔊 і порівняй вимову. «Знаю» — картка повернеться пізніше: через 1 день, 3 дні, тиждень, місяць. «Не пам’ятаю» — покажеться ще сьогодні й завтра. Коли слово вже добре знаєш, картка іноді показує переклад — тоді згадай англійське слово. До 10 нових слів на день.</div>
+    <div class="kv" style="align-items:center;gap:10px"><span>Голос озвучки</span><select id="wVoice" class="vsel"></select></div>
+    <div class="m" style="margin-top:6px">Краще жіночий «Покращений» або «Преміум» (Ava, Samantha) — їх можна завантажити в Параметрах: Доступність → Читання і мовлення → Голоси.</div>
   </div>
 </section>
 
@@ -435,7 +438,7 @@ function stopSay(){speaking=false;$('bbSay').textContent='▶ Слухати';hl
 $('bbSay').onclick=async()=>{if(speaking)return stopSay();const w=D.week_text;if(!w)return;const sents=w.text.match(/[^.!?]+[.!?]*/g)||[w.text];
   speaking=true;$('bbSay').textContent='■ Стоп';
   if(window.speechSynthesis){let i=0;const next=()=>{if(!speaking||i>=sents.length)return stopSay();hl(i);const u=new SpeechSynthesisUtterance(sents[i].trim());u.lang='en-US';u.rate=rate*0.95;
-      const v=speechSynthesis.getVoices().find(v=>/en[-_]US/i.test(v.lang)&&/Samantha|Ava|Allison|Google/i.test(v.name))||speechSynthesis.getVoices().find(v=>/^en/i.test(v.lang));if(v)u.voice=v;
+      const v=enVoice();if(v)u.voice=v;
       u.onend=()=>{i++;next()};u.onerror=()=>stopSay();speechSynthesis.speak(u)};next();return}
   if(tts){try{tts.onLine(({line})=>hl(line));await tts.speak(sents.map(s=>({text:s.trim(),language:'en',rate})))}catch(e){}stopSay();return}
   stopSay();toast('Озвучка тут недоступна — скористайся T³')};
@@ -452,7 +455,16 @@ function wSt(){if(!S.words)S.words={};return S.words}
 function wQueue(){const t=today(),ws=wSt(),all=wordList(),due=[],nw=[];const newToday=Object.values(ws).filter(x=>x.first===t).length;
   all.forEach(w=>{const s=ws[w.id];if(s){if(s.due<=t)due.push(w)}else nw.push(w)});
   return{all,due,nw:nw.slice(0,Math.max(0,NEW_PER_DAY-newToday)),newTotal:nw.length,learned:all.filter(w=>(ws[w.id]||{}).box>=4).length}}
-function enVoice(){try{const v=speechSynthesis.getVoices();return v.find(x=>/en[-_]US/i.test(x.lang)&&/Samantha|Ava|Allison|Google/i.test(x.name))||v.find(x=>/^en/i.test(x.lang))}catch(e){return null}}
+let VOICES=[];
+function scoreV(v){let s=0;if(/en[-_]US/i.test(v.lang))s+=20;if(/premium|преміум|премиум/i.test(v.name))s+=10;if(/enhanced|покращ|улучш/i.test(v.name))s+=8;
+  if(/Ava|Samantha|Allison|Zoe|Susan|Nicky|Joelle|Noelle|Google US English|Jenny|Aria/i.test(v.name))s+=5;
+  if(/Aaron|Fred|Alex|Nathan|Tom|Arthur|Daniel|Rishi|Gordon|Reed|Rocko|Eddy|Grandpa|Grandma|Ralph|Junior|Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Guy|David|Mark/i.test(v.name))s-=15;return s}
+function loadVoices(){try{VOICES=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang))}catch(e){VOICES=[]}renderVoicePick()}
+function enVoice(){let n='';try{n=localStorage.getItem(KEY+'-voice')||''}catch(e){}if(n){const v=VOICES.find(x=>x.name===n);if(v)return v}
+  return VOICES.slice().sort((a,b)=>scoreV(b)-scoreV(a))[0]||null}
+function renderVoicePick(){const el=$('wVoice');if(!el)return;if(!VOICES.length){el.innerHTML='<option value="">стандартний</option>';return}const cur=enVoice();
+  el.innerHTML=VOICES.slice().sort((a,b)=>scoreV(b)-scoreV(a)).map(v=>'<option value="'+esc(v.name)+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+esc(v.name)+' · '+esc(v.lang)+'</option>').join('')}
+try{speechSynthesis.onvoiceschanged=loadVoices}catch(e){}
 function sayEn(txt){if(!txt)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='en-US';u.rate=0.85;const v=enVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){toast('Озвучка тут недоступна')}}
 function wStart(){const q=wQueue();wSess=q.due.concat(q.nw);wIdx=0;wFlip=false;wDone=0}
 function renderWords(){const q=wQueue(),box=$('wCard');
@@ -486,7 +498,9 @@ function renderAll(){header();renderToday();renderTrack();renderPim();renderHw()
 try{const c=JSON.parse(localStorage.getItem(KEY+'-data'));if(c)D=c}catch(e){}
 renderAll();
 refreshHas().then(loadCur);
-const APP_VER='2026-11-27d';
+loadVoices();setTimeout(loadVoices,800);
+$('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! Where is my luggage?')};
+const APP_VER='2026-11-27e';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
