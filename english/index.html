@@ -477,13 +477,23 @@ let AUD={},wAgain=new Set(),wPractice=false;try{AUD=JSON.parse(localStorage.getI
 const audKey=w=>{const e=w.en.trim().toLowerCase();return /\s/.test(e)?'':e.replace(/[^a-z'\-]/g,'')};
 let audBatch=null;
 // Live US recordings from Wikimedia Commons (files "En-us-<word>.ogg", played as their MP3 version). One request for all words.
+const mp3Of=u=>{u=u.split('?')[0];return u.replace('/wikipedia/commons/','/wikipedia/commons/transcoded/')+'/'+u.split('/').pop()+'.mp3'};
+function commonsUrls(files){if(!files.length)return Promise.resolve({});
+  return fetch('https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&format=json&origin=*&titles='+encodeURIComponent(files.map(f=>'File:'+f).join('|')))
+    .then(r=>{if(!r.ok)throw new Error('net');return r.json()}).then(j=>{const q=j.query||{},norm={},out={};(q.normalized||[]).forEach(n=>{norm[n.to]=n.from});
+      Object.values(q.pages||{}).forEach(p=>{const t=(norm[p.title]||p.title).replace(/^File:/i,''),u=p.imageinfo&&p.imageinfo[0]&&p.imageinfo[0].url;if(u)out[t.toLowerCase().replace(/_/g,' ')]=mp3Of(u)});return out})}
+// Wiktionary marks each recording with its accent: take only those marked US / General American.
+function wiktUS(keys){if(!keys.length)return Promise.resolve({});
+  return fetch('https://en.wiktionary.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=json&origin=*&titles='+encodeURIComponent(keys.join('|')))
+    .then(r=>{if(!r.ok)throw new Error('net');return r.json()}).then(j=>{const out={};Object.values((j.query||{}).pages||{}).forEach(p=>{
+      const rv=(p.revisions||[])[0],t=rv&&rv.slots&&rv.slots.main?rv.slots.main['*']:'';const m=t.match(/==English==([\s\S]*?)(\n==[^=]|$)/);const en=m?m[1]:'';
+      const re=/\{\{audio\|en\|([^|}]+)([^}]*)\}\}/g;let a;while((a=re.exec(en))){const file=a[1].trim(),acc=((a[2]||'').match(/\|a=([^|}]*)/)||[])[1]||'';
+        if(/\b(US|U\.S\.|GA|GenAm|General American|American)\b/.test(acc)&&!/UK|RP|England|British|Australia|Canada|Scotland|Ireland|India/i.test(acc)){out[p.title.toLowerCase()]=file;break}}});return out})}
 function audLookup(keys){keys=[...new Set(keys.filter(k=>k&&!(k in AUD)))].slice(0,50);if(!keys.length)return Promise.resolve();
-  const titles=keys.map(k=>'File:En-us-'+k+'.ogg').join('|');
-  return fetch('https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&format=json&origin=*&titles='+encodeURIComponent(titles))
-    .then(r=>{if(!r.ok)throw new Error('net');return r.json()}).then(j=>{const q=j.query||{},norm={};(q.normalized||[]).forEach(n=>{norm[n.to]=n.from});
-      const found={};Object.values(q.pages||{}).forEach(p=>{const t=norm[p.title]||p.title,u=p.imageinfo&&p.imageinfo[0]&&p.imageinfo[0].url;if(u)found[t.toLowerCase()]=u.split('?')[0]});
-      keys.forEach(k=>{const u=found[('File:En-us-'+k+'.ogg').toLowerCase()];AUD[k]=u?u.replace('/wikipedia/commons/','/wikipedia/commons/transcoded/')+'/'+u.split('/').pop()+'.mp3':''});
-      try{localStorage.setItem(KEY+'-aud2',JSON.stringify(AUD))}catch(e){}}).catch(()=>{})}
+  const save=()=>{try{localStorage.setItem(KEY+'-aud2',JSON.stringify(AUD))}catch(e){}};
+  return commonsUrls(keys.map(k=>'En-us-'+k+'.ogg')).then(found=>{const miss=[];keys.forEach(k=>{const u=found[('en-us-'+k+'.ogg')];if(u)AUD[k]=u;else miss.push(k)});
+      return wiktUS(miss).then(files=>{const names=Object.values(files);return commonsUrls(names).then(urls=>{miss.forEach(k=>{const f=files[k];const u=f&&urls[f.toLowerCase().replace(/_/g,' ')];AUD[k]=u||''})})})
+        .catch(()=>{})}).then(save).catch(()=>{})}
 function wordAudio(w){const k=audKey(w);if(!k)return Promise.resolve('');if(k in AUD)return Promise.resolve(AUD[k]);
   if(!audBatch)audBatch=audLookup((wSess||[w]).concat([w]).map(audKey)).finally(()=>{audBatch=null});return audBatch.then(()=>AUD[k]||'')}
 const AC={};let WA=null;
@@ -530,7 +540,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-27k';
+const APP_VER='2026-11-27l';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
