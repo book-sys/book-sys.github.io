@@ -472,7 +472,7 @@ function renderVoicePick(){const el=$('wVoice');if(!el)return;if(!VOICES.length)
   el.innerHTML=VOICES.slice().sort((a,b)=>scoreV(b)-scoreV(a)).map(v=>'<option value="'+esc(v.name)+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+esc(v.name)+' · '+esc(v.lang)+'</option>').join('')}
 try{speechSynthesis.onvoiceschanged=loadVoices}catch(e){}
 function sayEn(txt,slow){if(!txt)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='en-US';u.rate=slow?0.5:0.85;const v=enVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){toast('Озвучка тут недоступна')}}
-let AUD={},wAgain=new Set();try{AUD=JSON.parse(localStorage.getItem(KEY+'-aud2'))||{}}catch(e){}
+let AUD={},wAgain=new Set(),wPractice=false;try{AUD=JSON.parse(localStorage.getItem(KEY+'-aud2'))||{}}catch(e){}
 const audKey=w=>{const e=w.en.trim().toLowerCase();return /\s/.test(e)?'':e.replace(/[^a-z'\-]/g,'')};
 let audBatch=null;
 // Live US recordings from Wikimedia Commons (files "En-us-<word>.ogg", played as their MP3 version). One request for all words.
@@ -492,14 +492,14 @@ function renderWords(){const q=wQueue(),box=$('wCard');
   $('wStats').innerHTML='<div class="stats"><div><b>'+q.due.length+'</b><span class="lab">повторити</span></div><div><b>'+q.nw.length+'</b><span class="lab">нових сьогодні</span></div><div><b>'+q.learned+' / '+q.all.length+'</b><span class="lab">вивчено</span></div></div>';
   if(!q.all.length){box.innerHTML='<h2>Слів ще немає</h2><div class="m">Нові слова з домашки з’являться тут після уроку.</div>';return}
   if(!wSess)wStart();
-  if(wIdx>=wSess.length){const nx=Object.values(wSt()).map(x=>x.due).filter(d=>d>today()).sort()[0];
-    box.innerHTML='<h2>На сьогодні все ✓</h2><div class="m">'+(wDone?'Пройдено карток: '+wDone+'. ':'')+(nx?'Наступне повторення: '+esc(nx.split('-').reverse().slice(0,2).join('.'))+'.':'')+'</div>'+(q.newTotal>q.nw.length?'<button class="btn" id="wMore">Ще 5 нових слів (залишилось '+(q.newTotal-q.nw.length)+')</button>':'')+'<button class="btn sec" id="wAgain">Перевірити нові картки</button>';
-    $('wAgain').onclick=()=>{wSess=null;renderWords()};if($('wMore'))$('wMore').onclick=()=>{const t=today(),used=Object.values(wSt()).filter(x=>x.first===t).length;S.wExtra={[t]:Math.max(0,used-NEW_PER_DAY)+5};save();wSess=null;renderWords();renderWordsToday()};return}
-  const w0=wSess[wIdx],w=q.all.find(x=>x.id===w0.id)||w0,s=wSt()[w.id]||{box:0,n:0},ru=s.box>=2&&s.n%2===1;
+  if(wIdx>=wSess.length){wPractice=false;const nx=Object.values(wSt()).map(x=>x.due).filter(d=>d>today()).sort()[0];
+    box.innerHTML='<h2>На сьогодні все ✓</h2><div class="m">'+(wDone?'Пройдено карток: '+wDone+'. ':'')+(nx?'Наступне повторення: '+esc(nx.split('-').reverse().slice(0,2).join('.'))+'.':'')+'</div>'+(q.newTotal>q.nw.length?'<button class="btn" id="wMore">Ще 5 нових слів (залишилось '+(q.newTotal-q.nw.length)+')</button>':'')+(q.all.length?'<button class="btn sec" id="wPrac">Тренування: усі слова ще раз</button><div class="m" style="margin-top:4px">Тренування не змінює розклад повторень — просто послухати й повторити.</div>':'')+'<button class="btn sec" id="wAgain">Перевірити нові картки</button>';
+    $('wAgain').onclick=()=>{wSess=null;renderWords()};if($('wPrac'))$('wPrac').onclick=()=>{wSess=q.all.slice().sort(()=>Math.random()-.5);wIdx=0;wFlip=false;wDone=0;wPractice=true;audLookup(wSess.map(audKey)).then(()=>renderWords());renderWords()};if($('wMore'))$('wMore').onclick=()=>{const t=today(),used=Object.values(wSt()).filter(x=>x.first===t).length;S.wExtra={[t]:Math.max(0,used-NEW_PER_DAY)+5};save();wSess=null;renderWords();renderWordsToday()};return}
+  const w0=wSess[wIdx],w=q.all.find(x=>x.id===w0.id)||w0,s=wSt()[w.id]||{box:0,n:0},ru=!wPractice&&s.box>=2&&s.n%2===1;
   const ak=audKey(w),known=!ak||(ak in AUD),url=ak?AUD[ak]:'';
   const say=url?'<button class="wsay" data-say="1" aria-label="Слухати">🔊</button><button class="wsay slow" data-say="1" data-slow="1" aria-label="Повільно">🐢</button>'
     :(known?'<div class="m" style="font-size:12px">запису вимови немає</div>':'<div class="m" style="font-size:12px">шукаю запис вимови…</div>');
-  let h='<div class="m" style="text-align:center">'+(wIdx+1)+' з '+wSess.length+(s.n?'':' · нове слово')+'</div>';
+  let h='<div class="m" style="text-align:center">'+(wIdx+1)+' з '+wSess.length+(wPractice?' · тренування':(s.n?'':' · нове слово'))+'</div>';
   if(!wFlip){h+=ru?'<div class="wfront">'+esc(w.ru)+'</div><div class="m" style="text-align:center">Скажи англійською</div>'
                  :'<div class="wfront">'+esc(w.en)+'</div>'+(w.ipa?'<div class="wipa">/'+esc(w.ipa)+'/</div>':'')+'<div style="text-align:center">'+say+'</div>';
     h+='<button class="btn" id="wShow">Показати відповідь</button>'}
@@ -509,7 +509,7 @@ function renderWords(){const q=wQueue(),box=$('wCard');
   box.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>playWord(w,!!b.dataset.slow));
   if(!known){const id=w.id;wordAudio(w).then(()=>{const c=wSess&&wSess[wIdx];if(c&&c.id===id)renderWords()})}
   if(!wFlip){$('wShow').onclick=()=>{wFlip=true;renderWords();playWord(w)}}
-  else{const grade=ok=>{const ws=wSt(),t=today(),st=ws[w.id]||(ws[w.id]={box:0,n:0,ok:0,bad:0,first:t});st.n++;
+  else{const grade=ok=>{if(wPractice){wIdx++;wFlip=false;renderWords();return}const ws=wSt(),t=today(),st=ws[w.id]||(ws[w.id]={box:0,n:0,ok:0,bad:0,first:t});st.n++;
       if(ok){st.box=Math.min(WI.length-1,st.box+1);st.ok++;st.due=addDays(t,WI[st.box]);const dd=WI[st.box];toast(st.box>=4?'✓ Вивчено! Повторимо через '+dd+' дн.':'✓ Наступний раз — через '+dd+' дн.')}
       else{st.box=0;st.bad++;st.due=addDays(t,1);if(!wAgain.has(w.id)&&!wSess.slice(wIdx+1).some(x=>x.id===w.id)){wAgain.add(w.id);wSess.push(w);toast('Покажу ще раз наприкінці і завтра')}else toast('Повторимо завтра')}
       st.last=t;wDone++;wIdx++;wFlip=false;if(wIdx>=wSess.length&&t>=START){const d=S.days[t]||(S.days[t]={});if(!d.words){d.words=true;toast('Слова на сьогодні — готово 🎉')}}
@@ -525,7 +525,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-27i';
+const APP_VER='2026-11-27j';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
