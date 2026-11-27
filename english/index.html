@@ -460,7 +460,7 @@ function wordList(){const seen={},out=[];(D.homework||[]).forEach(h=>(h.words||[
 function wSt(){if(!S.words)S.words={};return S.words}
 function wQueue(){const t=today(),ws=wSt(),all=wordList(),due=[],nw=[];const newToday=Object.values(ws).filter(x=>x.first===t).length;
   all.forEach(w=>{const s=ws[w.id];if(s){if(s.due<=t)due.push(w)}else nw.push(w)});
-  return{all,due,nw:nw.slice(0,Math.max(0,NEW_PER_DAY-newToday)),newTotal:nw.length,learned:all.filter(w=>(ws[w.id]||{}).box>=4).length}}
+  const extra=((S.wExtra||{})[t])||0;return{all,due,nw:nw.slice(0,Math.max(0,NEW_PER_DAY+extra-newToday)),newTotal:nw.length,learned:all.filter(w=>(ws[w.id]||{}).box>=4).length}}
 let VOICES=[];
 function scoreV(v){let s=0;if(/en[-_]US/i.test(v.lang))s+=20;if(/premium|преміум|премиум/i.test(v.name))s+=10;if(/enhanced|покращ|улучш/i.test(v.name))s+=8;
   if(/Ava|Samantha|Allison|Zoe|Susan|Nicky|Joelle|Noelle|Google US English|Jenny|Aria/i.test(v.name))s+=5;
@@ -487,8 +487,8 @@ function renderWords(){const q=wQueue(),box=$('wCard');
   if(!q.all.length){box.innerHTML='<h2>Слів ще немає</h2><div class="m">Нові слова з домашки з’являться тут після уроку.</div>';return}
   if(!wSess)wStart();
   if(wIdx>=wSess.length){const nx=Object.values(wSt()).map(x=>x.due).filter(d=>d>today()).sort()[0];
-    box.innerHTML='<h2>На сьогодні все ✓</h2><div class="m">'+(wDone?'Пройдено карток: '+wDone+'. ':'')+(nx?'Наступне повторення: '+esc(nx.split('-').reverse().slice(0,2).join('.'))+'.':'')+'</div><button class="btn sec" id="wAgain">Перевірити нові картки</button>';
-    $('wAgain').onclick=()=>{wSess=null;renderWords()};return}
+    box.innerHTML='<h2>На сьогодні все ✓</h2><div class="m">'+(wDone?'Пройдено карток: '+wDone+'. ':'')+(nx?'Наступне повторення: '+esc(nx.split('-').reverse().slice(0,2).join('.'))+'.':'')+'</div>'+(q.newTotal>q.nw.length?'<button class="btn" id="wMore">Ще 5 нових слів (залишилось '+(q.newTotal-q.nw.length)+')</button>':'')+'<button class="btn sec" id="wAgain">Перевірити нові картки</button>';
+    $('wAgain').onclick=()=>{wSess=null;renderWords()};if($('wMore'))$('wMore').onclick=()=>{const t=today(),used=Object.values(wSt()).filter(x=>x.first===t).length;S.wExtra={[t]:Math.max(0,used-NEW_PER_DAY)+5};save();wSess=null;renderWords();renderWordsToday()};return}
   const w0=wSess[wIdx],w=q.all.find(x=>x.id===w0.id)||w0,s=wSt()[w.id]||{box:0,n:0},ru=s.box>=2&&s.n%2===1;
   const ak=audKey(w),known=!ak||(ak in AUD),url=ak?AUD[ak]:'';
   const say=url?'<button class="wsay" data-say="1" aria-label="Слухати">🔊</button><button class="wsay slow" data-say="1" data-slow="1" aria-label="Повільно">🐢</button>'
@@ -519,7 +519,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-27g';
+const APP_VER='2026-11-27h';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
