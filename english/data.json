@@ -12,24 +12,39 @@
       "date": "2026-11-27",
       "title": "To be: am / is / are",
       "tasks": [
-        {"q": "Напиши 5 речень про себе з am / is / are: ім'я, звідки ти, де живеш, де працюєш, заміжня чи ні.", "hint": "My name is… / I'm from… / I live in… / I work at… / I'm married."},
-        {"q": "Зроби заперечення (скорочена форма): 1) I am tired. 2) The hotel is far. 3) We are at home.", "hint": "I'm not… / isn't / aren't"},
-        {"q": "Переклади: 1) Ти втомлена? 2) Готель далеко? 3) Кафе відкрите?", "hint": "Is / Are стоїть на першому місці. Пам'ятай про the."},
-        {"q": "Переклади: 1) Тут є аптека? 2) Тут є банк? (аптека — pharmacy)", "hint": "Is there a… near here?"},
-        {"q": "Відповідай англійською на питання незнайомця в аеропорту: Where are you from? Are you on holiday? What do you do?", "hint": "What do you do? = Ким ти працюєш?"}
+        {
+          "q": "Напиши 5 речень про себе з am / is / are: ім'я, звідки ти, де живеш, де працюєш, заміжня чи ні.",
+          "hint": "My name is… / I'm from… / I live in… / I work at… / I'm married."
+        },
+        {
+          "q": "Зроби заперечення (скорочена форма): 1) I am tired. 2) The hotel is far. 3) We are at home.",
+          "hint": "I'm not… / isn't / aren't"
+        },
+        {
+          "q": "Переклади: 1) Ти втомлена? 2) Готель далеко? 3) Кафе відкрите?",
+          "hint": "Is / Are стоїть на першому місці. Пам'ятай про the."
+        },
+        {
+          "q": "Переклади: 1) Тут є аптека? 2) Тут є банк? (аптека — pharmacy)",
+          "hint": "Is there a… near here?"
+        },
+        {
+          "q": "Відповідай англійською на питання незнайомця в аеропорту: Where are you from? Are you on holiday? What do you do?",
+          "hint": "What do you do? = Ким ти працюєш?"
+        }
       ],
       "words": [
-        "luggage — багаж",
-        "bill — рахунок",
-        "tired — втомлений",
-        "married — одружений, заміжня",
-        "far — далеко",
-        "open — відкритий, відчинений",
-        "tourist — турист",
-        "flight — рейс, політ",
-        "seat — місце (сидіння)",
-        "What do you do? — Ким ти працюєш?",
-        "Have a good trip! — Гарної подорожі!"
+        "luggage /ˈlʌɡɪdʒ/ — багаж — Where is my luggage?",
+        "bill /bɪl/ — рахунок — Can I have the bill, please?",
+        "tired /ˈtaɪərd/ — втомлений — I'm tired.",
+        "married /ˈmærid/ — одружений, заміжня — I'm married.",
+        "far /fɑːr/ — далеко — Is the hotel far?",
+        "open /ˈoʊpən/ — відкритий, відчинений — Is the café open?",
+        "tourist /ˈtʊrɪst/ — турист — I'm a tourist.",
+        "flight /flaɪt/ — рейс, політ — My flight is at ten.",
+        "seat /siːt/ — місце (сидіння) — Is this seat free?",
+        "What do you do? /wʌt də jə ˈduː/ — Ким ти працюєш?",
+        "Have a good trip! /hæv ə ɡʊd ˈtrɪp/ — Гарної подорожі!"
       ]
     }
   ]
