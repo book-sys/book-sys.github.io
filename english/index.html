@@ -205,7 +205,7 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
 «Знаю» — картка повернеться пізніше: через 1 день, 3 дні, тиждень, 2 тижні, місяць. «Не пам’ятаю» — покажеться ще раз наприкінці і завтра.<br>
 «Вивчено» — слово, яке ти згадала 4 рази поспіль з перервами (приблизно за 2 тижні).<br>
 Коли слово вже добре знаєш, картка іноді показує переклад — тоді згадай англійське слово. До 10 нових слів на день.</div>
-    <div class="m" style="margin-top:8px;font-size:12px">Записи вимови: Wiktionary (CC BY-SA) через dictionaryapi.dev.</div>
+    <div class="m" style="margin-top:8px;font-size:12px">Записи вимови: Wikimedia Commons / Wiktionary (CC BY-SA).</div>
   </div>
 </section>
 
@@ -472,16 +472,22 @@ function renderVoicePick(){const el=$('wVoice');if(!el)return;if(!VOICES.length)
   el.innerHTML=VOICES.slice().sort((a,b)=>scoreV(b)-scoreV(a)).map(v=>'<option value="'+esc(v.name)+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+esc(v.name)+' · '+esc(v.lang)+'</option>').join('')}
 try{speechSynthesis.onvoiceschanged=loadVoices}catch(e){}
 function sayEn(txt,slow){if(!txt)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='en-US';u.rate=slow?0.5:0.85;const v=enVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){toast('Озвучка тут недоступна')}}
-let AUD={},wAgain=new Set();try{AUD=JSON.parse(localStorage.getItem(KEY+'-aud'))||{}}catch(e){}
+let AUD={},wAgain=new Set();try{AUD=JSON.parse(localStorage.getItem(KEY+'-aud2'))||{}}catch(e){}
 const audKey=w=>{const e=w.en.trim().toLowerCase();return /\s/.test(e)?'':e.replace(/[^a-z'\-]/g,'')};
-const audPending={};
-function wordAudio(w){const k=audKey(w);if(!k)return Promise.resolve('');if(k in AUD)return Promise.resolve(AUD[k]);if(audPending[k])return audPending[k];
-  return audPending[k]=fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(k)).then(r=>{if(r.status===404)return [];if(!r.ok)throw new Error('net');return r.json()}).then(j=>{
-    const a=[];(j||[]).forEach(e=>(e.phonetics||[]).forEach(p=>{if(p.audio)a.push(p.audio)}));const us=a.find(x=>/-us(-\d+)?\.mp3$/i.test(x));
-    AUD[k]=us||'';try{localStorage.setItem(KEY+'-aud',JSON.stringify(AUD))}catch(e){}return AUD[k]}).catch(()=>'').finally(()=>{delete audPending[k]})}
+let audBatch=null;
+// Live US recordings from Wikimedia Commons (files "En-us-<word>.ogg", played as their MP3 version). One request for all words.
+function audLookup(keys){keys=[...new Set(keys.filter(k=>k&&!(k in AUD)))].slice(0,50);if(!keys.length)return Promise.resolve();
+  const titles=keys.map(k=>'File:En-us-'+k+'.ogg').join('|');
+  return fetch('https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url&format=json&origin=*&titles='+encodeURIComponent(titles))
+    .then(r=>{if(!r.ok)throw new Error('net');return r.json()}).then(j=>{const q=j.query||{},norm={};(q.normalized||[]).forEach(n=>{norm[n.to]=n.from});
+      const found={};Object.values(q.pages||{}).forEach(p=>{const t=norm[p.title]||p.title,u=p.imageinfo&&p.imageinfo[0]&&p.imageinfo[0].url;if(u)found[t.toLowerCase()]=u.split('?')[0]});
+      keys.forEach(k=>{const u=found[('File:En-us-'+k+'.ogg').toLowerCase()];AUD[k]=u?u.replace('/wikipedia/commons/','/wikipedia/commons/transcoded/')+'/'+u.split('/').pop()+'.mp3':''});
+      try{localStorage.setItem(KEY+'-aud2',JSON.stringify(AUD))}catch(e){}}).catch(()=>{})}
+function wordAudio(w){const k=audKey(w);if(!k)return Promise.resolve('');if(k in AUD)return Promise.resolve(AUD[k]);
+  if(!audBatch)audBatch=audLookup((wSess||[w]).concat([w]).map(audKey)).finally(()=>{audBatch=null});return audBatch.then(()=>AUD[k]||'')}
 const WA=new Audio();
 function playWord(w,slow){const u=AUD[audKey(w)];if(!u)return;try{WA.pause()}catch(e){}WA.src=u;try{WA.preservesPitch=true;WA.webkitPreservesPitch=true}catch(e){}WA.playbackRate=slow?0.6:1;WA.play().then(()=>{WA.playbackRate=slow?0.6:1}).catch(()=>{})}
-function wStart(){const q=wQueue();wSess=q.due.concat(q.nw);wIdx=0;wFlip=false;wDone=0;wAgain=new Set();wSess.forEach(wordAudio)}
+function wStart(){const q=wQueue();wSess=q.due.concat(q.nw);wIdx=0;wFlip=false;wDone=0;wAgain=new Set();if(wSess.length)wordAudio(wSess[0])}
 function renderWords(){const q=wQueue(),box=$('wCard');
   $('wStats').innerHTML='<div class="stats"><div><b>'+q.due.length+'</b><span class="lab">повторити</span></div><div><b>'+q.nw.length+'</b><span class="lab">нових сьогодні</span></div><div><b>'+q.learned+' / '+q.all.length+'</b><span class="lab">вивчено</span></div></div>';
   if(!q.all.length){box.innerHTML='<h2>Слів ще немає</h2><div class="m">Нові слова з домашки з’являться тут після уроку.</div>';return}
@@ -519,7 +525,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-27h';
+const APP_VER='2026-11-27i';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
