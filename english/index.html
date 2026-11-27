@@ -95,6 +95,7 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
 .wex{font-size:17px;text-align:center;color:var(--ink);margin:10px 0 4px;font-style:italic}
 .wsay{width:52px;height:52px;border-radius:50%;border:2px solid var(--ln);background:none;font-size:22px;margin:6px auto}
 .vsel{font:inherit;font-size:14px;border:1px solid var(--ln);border-radius:10px;padding:6px 8px;background:var(--bg);color:var(--ink);max-width:62%}
+.wsay+.wsay{margin-left:10px}.wsay.sm+.wsay.sm{margin-left:4px}
 .wsay.sm{width:36px;height:36px;font-size:16px;margin:0 0 0 4px;vertical-align:middle}
 .hide{display:none!important}
 .sync{font-size:12px;color:var(--mu);text-align:center;margin:14px 0 4px}
@@ -199,9 +200,12 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
   <div class="card" id="wCard"></div>
   <div class="card">
     <h2>Як це працює</h2>
-    <div class="m">Слова беруться з домашки. Спершу скажи слово вголос, потім натисни 🔊 і порівняй вимову. «Знаю» — картка повернеться пізніше: через 1 день, 3 дні, тиждень, місяць. «Не пам’ятаю» — покажеться ще сьогодні й завтра. Коли слово вже добре знаєш, картка іноді показує переклад — тоді згадай англійське слово. До 10 нових слів на день.</div>
-    <div class="kv" style="align-items:center;gap:10px"><span>Голос озвучки</span><select id="wVoice" class="vsel"></select></div>
-    <div class="m" style="margin-top:6px">Краще жіночий «Покращений» або «Преміум» (Ava, Samantha) — їх можна завантажити в Параметрах: Доступність → Читання і мовлення → Голоси.</div>
+    <div class="m">Слова беруться з домашки. Спершу скажи слово вголос, потім натисни 🔊 і порівняй.<br>
+🔊 — справжній запис вимови носія мови (американська), 🐢 — той самий запис повільніше. Якщо запису для слова чи фрази немає, кнопок немає — щоб не запам’ятати неправильно.<br>
+«Знаю» — картка повернеться пізніше: через 1 день, 3 дні, тиждень, 2 тижні, місяць. «Не пам’ятаю» — покажеться ще раз наприкінці і завтра.<br>
+«Вивчено» — слово, яке ти згадала 4 рази поспіль з перервами (приблизно за 2 тижні).<br>
+Коли слово вже добре знаєш, картка іноді показує переклад — тоді згадай англійське слово. До 10 нових слів на день.</div>
+    <div class="m" style="margin-top:8px;font-size:12px">Записи вимови: Wiktionary (CC BY-SA) через dictionaryapi.dev.</div>
   </div>
 </section>
 
@@ -220,6 +224,8 @@ textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12p
   <div class="card">
     <h2>Як працювати з текстом</h2>
     <div class="m">Пн — встав текст у T³ і пройди дослівний переклад.<br>Вт–Сб — активне слухання: натисни «Слухати» і стеж за перекладом у T³.<br>Нд — прочитай текст уголос без перекладу.<br>Щодня — пасивне слухання фоном.</div>
+    <div class="kv" style="align-items:center;gap:10px"><span>Голос для тексту</span><select id="wVoice" class="vsel"></select></div>
+    <div class="m" style="margin-top:6px">Текст тижня читає голос телефона. Краще жіночий «Покращений» або «Преміум» (Ava, Samantha): Параметри → Доступність → Читання і мовлення → Голоси.</div>
   </div>
 </section>
 
@@ -465,8 +471,17 @@ function enVoice(){let n='';try{n=localStorage.getItem(KEY+'-voice')||''}catch(e
 function renderVoicePick(){const el=$('wVoice');if(!el)return;if(!VOICES.length){el.innerHTML='<option value="">стандартний</option>';return}const cur=enVoice();
   el.innerHTML=VOICES.slice().sort((a,b)=>scoreV(b)-scoreV(a)).map(v=>'<option value="'+esc(v.name)+'"'+(cur&&v.name===cur.name?' selected':'')+'>'+esc(v.name)+' · '+esc(v.lang)+'</option>').join('')}
 try{speechSynthesis.onvoiceschanged=loadVoices}catch(e){}
-function sayEn(txt){if(!txt)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='en-US';u.rate=0.85;const v=enVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){toast('Озвучка тут недоступна')}}
-function wStart(){const q=wQueue();wSess=q.due.concat(q.nw);wIdx=0;wFlip=false;wDone=0}
+function sayEn(txt,slow){if(!txt)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='en-US';u.rate=slow?0.5:0.85;const v=enVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){toast('Озвучка тут недоступна')}}
+let AUD={},wAgain=new Set();try{AUD=JSON.parse(localStorage.getItem(KEY+'-aud'))||{}}catch(e){}
+const audKey=w=>{const e=w.en.trim().toLowerCase();return /\s/.test(e)?'':e.replace(/[^a-z'\-]/g,'')};
+const audPending={};
+function wordAudio(w){const k=audKey(w);if(!k)return Promise.resolve('');if(k in AUD)return Promise.resolve(AUD[k]);if(audPending[k])return audPending[k];
+  return audPending[k]=fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(k)).then(r=>{if(r.status===404)return [];if(!r.ok)throw new Error('net');return r.json()}).then(j=>{
+    const a=[];(j||[]).forEach(e=>(e.phonetics||[]).forEach(p=>{if(p.audio)a.push(p.audio)}));const us=a.find(x=>/-us(-\d+)?\.mp3$/i.test(x));
+    AUD[k]=us||'';try{localStorage.setItem(KEY+'-aud',JSON.stringify(AUD))}catch(e){}return AUD[k]}).catch(()=>'').finally(()=>{delete audPending[k]})}
+const WA=new Audio();
+function playWord(w,slow){const u=AUD[audKey(w)];if(!u)return;try{WA.pause()}catch(e){}WA.src=u;try{WA.preservesPitch=true;WA.webkitPreservesPitch=true}catch(e){}WA.playbackRate=slow?0.6:1;WA.play().then(()=>{WA.playbackRate=slow?0.6:1}).catch(()=>{})}
+function wStart(){const q=wQueue();wSess=q.due.concat(q.nw);wIdx=0;wFlip=false;wDone=0;wAgain=new Set();wSess.forEach(wordAudio)}
 function renderWords(){const q=wQueue(),box=$('wCard');
   $('wStats').innerHTML='<div class="stats"><div><b>'+q.due.length+'</b><span class="lab">повторити</span></div><div><b>'+q.nw.length+'</b><span class="lab">нових сьогодні</span></div><div><b>'+q.learned+' / '+q.all.length+'</b><span class="lab">вивчено</span></div></div>';
   if(!q.all.length){box.innerHTML='<h2>Слів ще немає</h2><div class="m">Нові слова з домашки з’являться тут після уроку.</div>';return}
@@ -475,20 +490,24 @@ function renderWords(){const q=wQueue(),box=$('wCard');
     box.innerHTML='<h2>На сьогодні все ✓</h2><div class="m">'+(wDone?'Пройдено карток: '+wDone+'. ':'')+(nx?'Наступне повторення: '+esc(nx.split('-').reverse().slice(0,2).join('.'))+'.':'')+'</div><button class="btn sec" id="wAgain">Перевірити нові картки</button>';
     $('wAgain').onclick=()=>{wSess=null;renderWords()};return}
   const w0=wSess[wIdx],w=q.all.find(x=>x.id===w0.id)||w0,s=wSt()[w.id]||{box:0,n:0},ru=s.box>=2&&s.n%2===1;
-  const say='<button class="wsay" data-say="1" aria-label="Listen">🔊</button>';
+  const ak=audKey(w),known=!ak||(ak in AUD),url=ak?AUD[ak]:'';
+  const say=url?'<button class="wsay" data-say="1" aria-label="Слухати">🔊</button><button class="wsay slow" data-say="1" data-slow="1" aria-label="Повільно">🐢</button>'
+    :(known?'<div class="m" style="font-size:12px">запису вимови немає</div>':'<div class="m" style="font-size:12px">шукаю запис вимови…</div>');
   let h='<div class="m" style="text-align:center">'+(wIdx+1)+' з '+wSess.length+(s.n?'':' · нове слово')+'</div>';
   if(!wFlip){h+=ru?'<div class="wfront">'+esc(w.ru)+'</div><div class="m" style="text-align:center">Скажи англійською</div>'
                  :'<div class="wfront">'+esc(w.en)+'</div>'+(w.ipa?'<div class="wipa">/'+esc(w.ipa)+'/</div>':'')+'<div style="text-align:center">'+say+'</div>';
     h+='<button class="btn" id="wShow">Показати відповідь</button>'}
-  else{h+='<div class="wfront">'+esc(w.en)+'</div>'+(w.ipa?'<div class="wipa">/'+esc(w.ipa)+'/</div>':'')+'<div style="text-align:center">'+say+'</div><div class="wback">'+esc(w.ru)+'</div>'+(w.ex?'<div class="wex">'+esc(w.ex)+' <button class="wsay sm" data-say="2" aria-label="Listen to the example">🔊</button></div>':'')+
+  else{h+='<div class="wfront">'+esc(w.en)+'</div>'+(w.ipa?'<div class="wipa">/'+esc(w.ipa)+'/</div>':'')+'<div style="text-align:center">'+say+'</div><div class="wback">'+esc(w.ru)+'</div>'+(w.ex?'<div class="wex">'+esc(w.ex)+'</div>':'')+
     '<div class="btns"><button class="btn sec" id="wNo">Не пам’ятаю</button><button class="btn" id="wYes">Знаю</button></div>'}
   box.innerHTML=h;
-  box.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>sayEn(b.dataset.say==='2'?w.ex:w.en));
-  if(!wFlip){$('wShow').onclick=()=>{wFlip=true;renderWords();sayEn(w.en)};if(!ru&&!s.n)sayEn(w.en)}
+  box.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>playWord(w,!!b.dataset.slow));
+  if(!known){const id=w.id;wordAudio(w).then(()=>{const c=wSess&&wSess[wIdx];if(c&&c.id===id)renderWords()})}
+  if(!wFlip){$('wShow').onclick=()=>{wFlip=true;renderWords();playWord(w)}}
   else{const grade=ok=>{const ws=wSt(),t=today(),st=ws[w.id]||(ws[w.id]={box:0,n:0,ok:0,bad:0,first:t});st.n++;
-      if(ok){st.box=Math.min(WI.length-1,st.box+1);st.ok++;st.due=addDays(t,WI[st.box])}else{st.box=0;st.bad++;st.due=addDays(t,1);if(!wSess.slice(wIdx+1).some(x=>x.id===w.id))wSess.push(w)}
+      if(ok){st.box=Math.min(WI.length-1,st.box+1);st.ok++;st.due=addDays(t,WI[st.box]);const dd=WI[st.box];toast(st.box>=4?'✓ Вивчено! Повторимо через '+dd+' дн.':'✓ Наступний раз — через '+dd+' дн.')}
+      else{st.box=0;st.bad++;st.due=addDays(t,1);if(!wAgain.has(w.id)&&!wSess.slice(wIdx+1).some(x=>x.id===w.id)){wAgain.add(w.id);wSess.push(w);toast('Покажу ще раз наприкінці і завтра')}else toast('Повторимо завтра')}
       st.last=t;wDone++;wIdx++;wFlip=false;if(wIdx>=wSess.length&&t>=START){const d=S.days[t]||(S.days[t]={});if(!d.words){d.words=true;toast('Слова на сьогодні — готово 🎉')}}
-      save();renderWords();renderWordsToday();if(wIdx<wSess.length&&!(wSt()[wSess[wIdx].id]||{}).n)sayEn(wSess[wIdx].en)};
+      save();renderWords();renderWordsToday()};
     $('wNo').onclick=()=>grade(false);$('wYes').onclick=()=>grade(true)}}
 function renderWordsToday(){const el=$('wToday');if(!el)return;const q=wQueue();if(!q.all.length){el.classList.add('hide');return}el.classList.remove('hide');
   const n=q.due.length+q.nw.length,done=(S.days[today()]||{}).words;
@@ -499,8 +518,8 @@ try{const c=JSON.parse(localStorage.getItem(KEY+'-data'));if(c)D=c}catch(e){}
 renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
-$('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! Where is my luggage?')};
-const APP_VER='2026-11-27e';
+$('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
+const APP_VER='2026-11-27g';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
