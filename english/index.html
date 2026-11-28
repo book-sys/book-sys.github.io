@@ -31,6 +31,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--bf);ove
 .top{background:var(--top);color:var(--topink);padding:calc(22px + env(safe-area-inset-top)) 18px 70px}
 .top h1{margin:0;font-size:var(--h1s,32px);line-height:1.05;font-weight:var(--hw,800);font-family:var(--hf);letter-spacing:var(--hls,-.5px)}
 .top p{margin:4px 0 0;opacity:.92;font-size:15px}
+.top.compact{padding-bottom:18px}.top.compact h1{font-size:26px}.top.compact p{display:none}
+body.typing nav{display:none}
 .wrap{max-width:560px;margin:0 auto;padding:0 14px}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
 .stats b{display:block;font-size:28px;font-weight:800;line-height:1.1;font-family:var(--hf)}
@@ -115,7 +117,7 @@ textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12p
 </style>
 </head>
 <body>
-<header class="top">
+<header class="top" id="top">
   <div class="wrap">
     <h1 id="hello">English</h1>
     <p id="sub"></p>
@@ -262,7 +264,7 @@ textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12p
   <button data-t="pim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="3" y="14" width="5" height="7" rx="2"/><rect x="16" y="14" width="5" height="7" rx="2"/></svg>Pimsleur</button>
   <button data-t="hw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/></svg>Домашка</button>
   <button data-t="words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="13" height="14" rx="2"/><path d="M8 3h11a2 2 0 012 2v12"/></svg>Слова</button>
-  <button data-t="bb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h11M4 10h16M4 15h11M4 20h16"/></svg>Текст</button>
+  <button data-t="bb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h11M4 10h16M4 15h11M4 20h16"/></svg>Біркенбіль</button>
 </nav>
 <div class="toast" id="toast" role="status"></div>
 
@@ -342,7 +344,10 @@ function stats(){
   const pimDone=Object.values(S.pim).filter(x=>x.done).length;
   return{days,hours:Math.round(mins/6)/10,lessons,best,streak,hw,words,pimDone}}
 
-function header(){const now=new Date(),h=now.getHours();$('hello').textContent=(h<12?'Доброго ранку':h<18?'Добрий день':'Добрий вечір')+', Марино';
+let curTab='today';
+function header(){const now=new Date(),h=now.getHours();$('top').classList.toggle('compact',curTab!=='today');
+  if(curTab!=='today'){const b=document.querySelector('nav button[data-t="'+curTab+'"]');$('hello').textContent=b?b.textContent.trim():'English';return}
+  $('hello').textContent=(h<12?'Доброго ранку':h<18?'Добрий день':'Добрий вечір')+', Марино';
   const st=stats();$('sub').textContent=DN[now.getDay()]+', '+now.getDate()+' '+MN[now.getMonth()]+(st.days?' · день '+st.days:(today()<START?' · стартуємо 25 листопада':''))}
 function drawHero(){const el=$('hero');if(!el)return;const st=stats();el.innerHTML=HERO(st,el.clientWidth||360);if(typeof AFTER==='function')AFTER(el,st)}
 new ResizeObserver(()=>drawHero()).observe($('hero'));
@@ -521,7 +526,7 @@ $('bbAud').addEventListener('play',()=>{stopSay();try{aud.pause()}catch(e){}cons
 $('bbAud').addEventListener('ended',()=>bbListened());
 aud.addEventListener('play',()=>{try{$('bbAud').pause()}catch(e){}msFor(aud,SKIP,'Pimsleur '+lname(playId||S.cur))});
 
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));curTab=b.dataset.t;header();
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+b.dataset.t));window.scrollTo(0,0);if(b.dataset.t==='today')drawHero();if(b.dataset.t==='hw')fitHw()});
 
 const WI=[0,1,3,7,14,30,60,120],NEW_PER_DAY=10;let wSess=null,wIdx=0,wFlip=false,wDone=0;
@@ -611,7 +616,9 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-28b';
+const APP_VER='2026-11-28c';
+document.addEventListener('focusin',e=>{if(/^(TEXTAREA|INPUT)$/.test(e.target.tagName))document.body.classList.add('typing')});
+document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||!/^(TEXTAREA|INPUT)$/.test(a.tagName)){document.body.classList.remove('typing');const y=window.scrollY;window.scrollTo(0,y+1);window.scrollTo(0,y)}},120));
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
