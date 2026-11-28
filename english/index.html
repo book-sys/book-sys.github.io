@@ -161,7 +161,8 @@ textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12p
     <div class="kv"><span>Годин англійської</span><span id="kHours"></span></div>
     <div class="kv"><span>Уроків з Claude</span><span id="kLessons"></span></div>
     <div class="kv"><span>Домашок зроблено</span><span id="kHw"></span></div>
-    <div class="kv"><span>Нових слів</span><span id="kWords"></span></div>
+    <div class="kv"><span>Слів вивчено</span><span id="kWords"></span></div>
+    <div class="kv"><span>Слів у повторенні</span><span id="kWordsRev"></span></div>
     <div class="kv" style="margin-top:16px"><span>Pimsleur</span><span id="kPim"></span></div>
     <div class="bar"><i id="pimBar" style="width:0"></i></div>
     <div class="kv"><span>Цей тиждень</span><span id="kWeek"></span></div>
@@ -239,6 +240,7 @@ textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12p
   </div>
   <div class="card hide" id="bbL">
     <button class="btn" id="bbSay">▶ Слухати</button>
+    <button class="btn sec" id="bbShadow">🗣 Shadowing — повторюй за голосом</button>
     <div class="pills" style="margin-top:10px"><span class="m">Швидкість</span><button class="pill2" data-r="0.7">0.7×</button><button class="pill2" data-r="0.8">0.8×</button><button class="pill2" data-r="1">1×</button><button class="pill2" id="bbLoop">↻ По колу</button></div>
     <div id="bbLis" style="margin-top:8px"></div>
     <div id="bbAudBox" class="hide" style="margin-top:12px"><div class="m">Запис для фонового слухання — грає і з вимкненим екраном:</div><audio id="bbAud" controls preload="none"></audio></div>
@@ -290,10 +292,13 @@ function HERO(st,W){const H=236,n=st.days,goal=Math.max(60,Math.ceil((n+1)/30)*3
  for(let f=10;f<goal;f+=10){const [x,y]=at(f/goal);g+='<path d="M'+x.toFixed(0)+' '+y.toFixed(0)+' V'+(y-16).toFixed(0)+'" stroke="#2b2340" stroke-width="1.5"/><path d="M'+x.toFixed(0)+' '+(y-16).toFixed(0)+' l9 3 l-9 3Z" fill="'+(n>=f?'#C8A24A':'#ffffff')+'"/>'}
  const [hx,hy]=at(Math.min(1,n/goal));g+='<circle cx="'+hx.toFixed(0)+'" cy="'+hy.toFixed(0)+'" r="7" fill="#C8A24A" stroke="#fff" stroke-width="2.5"/>';
  const next=(Math.floor(n/10)+1)*10;return CARD(H,W,g,'День <b>'+n+'</b> підйому','наступний прапорець — на дні '+next)}
-const MIN={lesson:60,hw:15,pim:30,bbd:10,bb:12,bbr:15,film:20,words:10};
-const C={words:['Слова','5–10 хв','t-pim','W'],lesson:['Урок з Claude','8:30 · 60 хв','t-lesson','CL'],hw:['Домашка','15 хв','t-hw','HW'],pim:['Pimsleur, повний урок','~30 хв','t-pim','PI'],
-bbd:['Біркенбіль: розбір тексту','пословний переклад · 10 хв','t-bb','BB'],bb:['Біркенбіль: активне слухання','10–15 хв','t-bb','BB'],bbr:['Біркенбіль: прочитати вголос','15 хв','t-bb','BB'],film:['Серіал / YouTube з англійськими субтитрами','20 хв · за бажанням','t-film','TV']};
+const MIN={lesson:60,hw:15,pim:30,bbd:15,bb:10,bbsh:12,bbr:15,film:20,words:5};
+const C={words:['Слова: картки','5 хв','t-pim','W'],lesson:['Урок з Claude','8:30 · 60 хв','t-lesson','CL'],hw:['Домашка','15 хв','t-hw','HW'],pim:['Pimsleur, повний урок','~30 хв','t-pim','PI'],
+bbd:['Біркенбіль: розбір нового тексту','пословний переклад · 15 хв','t-bb','BB'],bb:['Біркенбіль: слухання','10 хв','t-bb','BB'],bbsh:['Біркенбіль: слухання + shadowing','10–15 хв','t-bb','BB'],bbr:['Біркенбіль: shadowing + вголос','15 хв','t-bb','BB'],film:['Серіал / YouTube з англійськими субтитрами','20 хв · за бажанням','t-film','TV']};
 const PLAN={0:['bbr','film'],1:['lesson','hw','bbd'],2:['pim','bb'],3:['lesson','hw','bb'],4:['pim','bb'],5:['lesson','hw','bb'],6:['bb']};
+const PLAN2={0:['words','bbd','film'],1:['lesson','words','bb'],2:['hw','words','pim'],3:['lesson','words','bb'],4:['hw','words','pim'],5:['lesson','words','bbsh'],6:['hw','words','bbr']},PLAN2_FROM='2026-11-29';
+const planOf=d=>(iso(d)>=PLAN2_FROM?PLAN2:PLAN)[d.getDay()];
+const GO={hw:'hw',pim:'pim',words:'words',bbd:'bb',bb:'bb',bbsh:'bb',bbr:'bb'};
 const OPT={film:1};
 const DN=['Неділя','Понеділок','Вівторок','Середа','Четвер','Пʼятниця','Субота'],DS=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 const MN=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
@@ -315,13 +320,14 @@ let db=null,saveT=null,writing=false;
 const SHEET_URL='https://script.google.com/macros/s/AKfycbw-JcRsrclDt6rWJncNPPeWRvFU8NC7QJdlzLueiXS0a_JCPzyQb18qrT2HkGOgPfD7/exec';
 let sheetT=null,sheetDirty=false;
 function sheetPayload(){const t=today(),early=Object.keys(S.days).filter(k=>k<START).sort(),days=[];
-  for(let d=pd(early[0]||START);iso(d)<=t;d.setDate(d.getDate()+1)){const k=iso(d),day=S.days[k]||{},pl=PLAN[d.getDay()];
+  for(let d=pd(early[0]||START);iso(d)<=t;d.setDate(d.getDate()+1)){const k=iso(d),day=S.days[k]||{},pl=planOf(d);
     days.push([k,DN[d.getDay()],pl.concat(day.words?['words']:[]).filter(x=>day[x]).map(x=>C[x][0]).join(', '),pl.map(x=>C[x][0]+(OPT[x]?' (за бажанням)':'')).join(', '),Math.round(dayScore(k)*100),dayMin(k)])}
   days.reverse();
   const pim=Object.keys(S.pim).sort().map(id=>{const x=S.pim[id]||{};return[lname(id),x.done?'так':'',!x.done&&x.t>5?fmt(x.t):'',x.note||'']}).filter(r=>r[1]||r[2]||r[3]);
   const hw=[];(D.homework||[]).forEach(w=>{const a=S.ans[w.id]||{};(w.tasks||[]).forEach((q,i)=>hw.push([w.date||'',w.title||'',i+1,q.q||'',a[i]||'',a._done?'так':'']))});
   const bb=Object.keys(S.bbw||{}).sort((x,y)=>String(x).localeCompare(String(y),undefined,{numeric:true})).map(k=>{const o=S.bbw[k]||{};return[isNaN(+k)?k:+k,o.theme||'',o.d?'так':'',o.l||0,o.s?'так':'']});
-  return JSON.stringify({ts:S.ts||Date.now(),state:S,days,pim,hw,bb})}
+  const ws=S.words||{},words=wordList().map(w=>{const o=ws[w.id];return o?[w.en,w.ru,o.box||0,o.due||'',o.ok||0,o.bad||0]:null}).filter(Boolean);
+  return JSON.stringify({ts:S.ts||Date.now(),state:S,days,pim,hw,bb,words})}
 function pushSheet(beacon){clearTimeout(sheetT);sheetT=null;if(!SHEET_URL||!sheetDirty)return;sheetDirty=false;const body=sheetPayload();
   if(beacon&&navigator.sendBeacon){try{if(navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain;charset=utf-8'})))return}catch(e){}}
   fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:body.length<60000,headers:{'Content-Type':'text/plain;charset=utf-8'},body}).then(()=>{const n=new Date();$('sync').textContent='Збережено в телефоні · надіслано в Google-таблицю о '+n.getHours()+':'+pad(n.getMinutes())}).catch(()=>{sheetDirty=true})}
@@ -332,7 +338,7 @@ function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}
 async function push(){if(!db||writing)return;writing=true;try{await db.doc('progress/main').set({state:JSON.stringify(S),ts:S.ts});$('sync').textContent='Збережено в Claude · синхронізовано'}catch(e){$('sync').textContent='Збережено в телефоні'}writing=false}
 
 const today=()=>iso(new Date());
-const need=d=>PLAN[d.getDay()].filter(x=>!OPT[x]);
+const need=d=>planOf(d).filter(x=>!OPT[x]);
 function dayScore(k){const d=pd(k),n=need(d),day=S.days[k]||{},c=n.filter(x=>day[x]).length;return n.length?c/n.length:0}
 function dayMin(k){const day=S.days[k]||{};let m=0;for(const x in day)if(day[x])m+=MIN[x]||0;return m}
 function stamped(k){return dayScore(k)>=0.5}
@@ -355,12 +361,12 @@ function drawHero(){const el=$('hero');if(!el)return;const st=stats();el.innerHT
 new ResizeObserver(()=>drawHero()).observe($('hero'));
 
 
-function renderToday(){const d=new Date(),k=iso(d),list=PLAN[d.getDay()],day=S.days[k]||{};
+function renderToday(){const d=new Date(),k=iso(d),list=planOf(d),day=S.days[k]||{};
   $('todayTitle').textContent=DN[d.getDay()]+(k<START?' · стартуємо завтра':'');
-  $('todayList').innerHTML=list.map(id=>{const c=C[id];return '<div class="task"><span class="tag '+c[2]+'">'+c[3]+'</span><div class="grow"'+(/^bb/.test(id)?' data-go="'+id+'" style="cursor:pointer"':'')+'>'+esc(c[0])+'<div class="m">'+esc(c[1])+(id==='pim'?' · урок '+lname(S.cur):'')+(/^bb/.test(id)?' · відкрити ›':'')+'</div></div><button class="chk'+(day[id]?' on':'')+'" data-k="'+id+'" aria-label="'+esc(c[0])+'">'+(day[id]?'✓':'')+'</button></div>'}).join('');
+  $('todayList').innerHTML=list.map(id=>{const c=C[id];return '<div class="task"><span class="tag '+c[2]+'">'+c[3]+'</span><div class="grow"'+(GO[id]?' data-go="'+id+'" style="cursor:pointer"':'')+'>'+esc(c[0])+'<div class="m">'+esc(c[1])+(id==='pim'?' · урок '+lname(S.cur):'')+(id==='words'?wordsDueText():'')+(GO[id]?' · відкрити ›':'')+'</div></div><button class="chk'+(day[id]?' on':'')+'" data-k="'+id+'" aria-label="'+esc(c[0])+'">'+(day[id]?'✓':'')+'</button></div>'}).join('');
   $('todayList').querySelectorAll('.chk').forEach(b=>b.onclick=()=>{const dd=S.days[k]||(S.days[k]={});const was=stamped(k);dd[b.dataset.k]=!dd[b.dataset.k];save();renderAll();
     const nb=$('todayList').querySelector('[data-k="'+b.dataset.k+'"]');if(dd[b.dataset.k]&&nb)nb.classList.add('pop');if(!was&&stamped(k))toast(DONE_MSG)});
-  $('todayList').querySelectorAll('[data-go]').forEach(g=>g.onclick=()=>{bbStep={bbd:'d',bb:'l',bbr:'s'}[g.dataset.go];document.querySelector('nav button[data-t="bb"]').click();renderBb()});
+  $('todayList').querySelectorAll('[data-go]').forEach(g=>g.onclick=()=>{const id=g.dataset.go;if(GO[id]==='bb')bbStep={bbd:'d',bb:'l',bbsh:'l',bbr:'s'}[id];document.querySelector('nav button[data-t="'+GO[id]+'"]').click();if(GO[id]==='bb')renderBb()});
   $('doneAll').style.display=dayScore(k)===1?'block':'none';
   const st=stats();$('stStreak').textContent=st.streak;$('stDays').textContent=st.days;$('stHours').textContent=st.hours;drawHero()}
 
@@ -374,7 +380,7 @@ function renderTrack(){const st=stats(),t=today(),trip='';let h='';
     if(k===t)cls+=' today';h+='<div class="'+cls+'">'+d.getDate()+'</div>'}
   $('cal').innerHTML=h;
   $('kDays').textContent=st.days;$('kBest').textContent=st.best+' дн.';$('kHours').textContent=st.hours+' год';$('kLessons').textContent=st.lessons;
-  $('kHw').textContent=st.hw;$('kWords').textContent=st.words;$('kPim').textContent=st.pimDone+' з 90';$('pimBar').style.width=(st.pimDone/90*100)+'%';
+  $('kHw').textContent=st.hw;{const ws=S.words||{},L=wordList();$('kWords').textContent=L.filter(w=>(ws[w.id]||{}).box>=4).length;$('kWordsRev').textContent=L.filter(w=>ws[w.id]&&(ws[w.id].box||0)<4).length}$('kPim').textContent=st.pimDone+' з 90';$('pimBar').style.width=(st.pimDone/90*100)+'%';
   const now=new Date(),mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));let a=0,b=0;
   for(let i=0;i<7;i++){const x=new Date(mon);x.setDate(mon.getDate()+i);const k=iso(x);if(k<START)continue;const n=need(x);b+=n.length;a+=n.filter(z=>(S.days[k]||{})[z]).length}
   $('kWeek').textContent=b?a+' з '+b:'—';$('weekBar').style.width=(b?a/b*100:0)+'%'}
@@ -456,9 +462,11 @@ $('ptEdit').onblur=()=>{if(L(S.cur).text){ptEditing=false;setTimeout(()=>renderP
 
 function fitTa(t){if(!t.offsetParent)return;t.style.height='auto';t.style.height=(t.scrollHeight+2)+'px'}
 function fitHw(){$('hwBox').querySelectorAll('textarea').forEach(fitTa)}
+function hwOpen(w){if(w.open)return w.open;if(!w.date)return '';const d=pd(w.date);d.setDate(d.getDate()+1);return iso(d)}
 function renderHw(){const H=D.homework||[];
   if(!H.length){$('hwBox').innerHTML='<div class="card"><h2>Поки що порожньо</h2><div class="m">Домашка з’явиться тут після уроку.</div></div>';return}
-  $('hwBox').innerHTML=H.slice().reverse().map(w=>{const a=S.ans[w.id]||{};
+  $('hwBox').innerHTML=H.slice().reverse().map(w=>{const a=S.ans[w.id]||{},op=hwOpen(w);
+    if(op&&today()<op){const tm=new Date();tm.setDate(tm.getDate()+1);return '<div class="card"><div class="m">'+esc(w.date)+'</div><h2 style="margin-top:2px">'+esc(w.title)+'</h2><div class="m">'+(op===iso(tm)?'Відкриється завтра':'Відкриється '+esc(op.split('-').reverse().join('.')))+' — зроби її тоді, з пам’яті.</div></div>'}
     return '<div class="card"><div class="m">'+esc(w.date)+(a._done?' <span class="pill">здано</span>':'')+'</div><h2 style="margin-top:2px">'+esc(w.title)+'</h2>'+
     (w.tasks||[]).map((t,i)=>'<div class="q"><div>'+(i+1)+'. '+esc(t.q)+'</div>'+(t.hint?'<button class="hintbtn" data-hint="1"><b>?</b>підказка</button><div class="m hide">'+esc(t.hint)+'</div>':'')+'<textarea data-w="'+esc(w.id)+'" data-i="'+i+'" placeholder="Твоя відповідь">'+esc(a[i]||'')+'</textarea></div>').join('')+
     ((w.words||[]).length?'<div class="q"><b>Нові слова</b><div class="m">'+w.words.map(esc).join('<br>')+'</div></div>':'')+
@@ -477,8 +485,8 @@ function bbLines(){const ls=curLesson();const w=ls?{lines:ls.lines||[],text:''}:
   if(w.lines&&w.lines.length)return w.lines.map(l=>({en:l.en||'',pairs:l.pairs&&l.pairs.length?l.pairs:sp(l.en||''),uk:l.uk||''}));
   return (String(w.text||'').match(/[^.!?]+[.!?]*/g)||[]).map(s=>s.trim()).filter(Boolean).map(s=>({en:s,pairs:sp(s),uk:''}))}
 function bbW(){const ls=curLesson(),w=ls?{week:'m:'+ls.id,theme:(ls.src||'')+': '+(ls.title||'')}:(D.week_text||{}),k=String(w.week||0);if(!S.bbw)S.bbw={};const o=S.bbw[k]||(S.bbw[k]={d:false,l:0,s:false});if(w.theme)o.theme=w.theme;return o}
-const bbDefault=()=>{const g=new Date().getDay();return g===1?'d':g===0?'s':'l'};
-function bbMarkDay(){const k=today();if(k<START)return;const id=PLAN[new Date().getDay()].find(x=>x==='bbd'||x==='bb'||x==='bbr');if(!id)return;
+const bbDefault=()=>{const g=new Date().getDay();return g===0?'d':g===6?'s':'l'};
+function bbMarkDay(){const k=today();if(k<START)return;const id=planOf(new Date()).find(x=>/^bb/.test(x));if(!id)return;
   const d=S.days[k]||(S.days[k]={});if(!d[id]){d[id]=true;renderToday();renderTrack()}}
 function renderBbProg(){const o=bbW();
   $('bbProg').innerHTML='<span class="'+(o.d?'ok':'')+'">Розбір '+(o.d?'✓':'—')+'</span><span class="'+(o.l>=5?'ok':'')+'">Слухання '+(o.l||0)+'/5</span><span class="'+(o.s?'ok':'')+'">Вголос '+(o.s?'✓':'—')+'</span>';
@@ -526,7 +534,7 @@ function speakLine(li,box,done){const l=bbLines()[li];if(!l){done&&done(true);re
   u.onstart=()=>hlWord(box,li,-1);
   u.onboundary=e=>{if(e.name&&e.name!=='word')return;let wi=0;for(let j=0;j<off.length;j++)if(off[j]<=e.charIndex)wi=j;hlWord(box,li,wi)};
   u.onend=()=>done&&done(false);u.onerror=()=>done&&done(true);speechSynthesis.speak(u)}
-function stopSay(){if(curLesson()){try{$('bbAud').pause()}catch(e){}}speaking=false;bbRun++;cancelAnimationFrame(bbRaf);try{LA.pause()}catch(e){}LA.onended=null;LA.onerror=null;try{speechSynthesis.cancel()}catch(e){}['bbDec','bbLis','bbSp'].forEach(id=>hlWord($(id),-1,-1));$('bbSay').textContent='▶ Слухати'}
+function stopSay(){if(curLesson()){try{$('bbAud').pause()}catch(e){}}speaking=false;bbRun++;cancelAnimationFrame(bbRaf);try{LA.pause()}catch(e){}LA.onended=null;LA.onerror=null;try{speechSynthesis.cancel()}catch(e){}['bbDec','bbLis','bbSp'].forEach(id=>hlWord($(id),-1,-1));$('bbSay').textContent='▶ Слухати';$('bbShadow').textContent='🗣 Shadowing — повторюй за голосом'}
 function sayLine(i,box){stopSay();if(curLesson()){toast('Для цього матеріалу — лише повний запис (кнопка «Слухати»)');return}if(!BBT&&!window.speechSynthesis){toast('Озвучка тут недоступна');return}speakLine(i,box,()=>hlWord(box,-1,-1))}
 function bbListened(){const o=bbW();o.l=(o.l||0)+1;bbMarkDay();save();toast('Прослуховування зараховано: '+o.l+'/5');renderBbProg()}
 function bbPlayAll(){const ls=curLesson();if(ls){const a=$('bbAud');if(!ls.audio||!a.src){toast(ls.audio?'Запис ще завантажується…':'Для цього матеріалу немає запису');return}speaking=true;$('bbSay').textContent='■ Стоп';a.currentTime=0;a.playbackRate=playRate();a.play().catch(()=>{});return}
@@ -535,6 +543,11 @@ function bbPlayAll(){const ls=curLesson();if(ls){const a=$('bbAud');if(!ls.audio
     if(i>=L.length){bbListened();if(bbLoop){i=0;setTimeout(()=>next(false),1200);return}return stopSay()}
     const li=i++;speakLine(li,box,e=>setTimeout(()=>next(e),350))};setTimeout(()=>next(false),200)}
 $('bbSay').onclick=()=>{if(speaking)stopSay();else bbPlayAll()};
+function bbShadowAll(){if(curLesson()){toast('Shadowing — для тексту тижня (там є запис кожного речення)');return}if(!BBT&&!window.speechSynthesis){toast('Озвучка тут недоступна');return}
+  stopSay();speaking=true;const run=++bbRun,box=$('bbLis'),L=bbLines();let i=0;$('bbShadow').textContent='■ Стоп';
+  const next=err=>{if(!speaking||run!==bbRun)return;if(err)return stopSay();if(i>=L.length){bbListened();return stopSay()}
+    const li=i++,t0=Date.now();speakLine(li,box,e=>{if(e)return next(e);toast('🗣 Повтори вголос');setTimeout(()=>next(false),Math.max(1200,(Date.now()-t0)*1.5))})};setTimeout(()=>next(false),200)}
+$('bbShadow').onclick=()=>{if(speaking)stopSay();else bbShadowAll()};
 $('bbSrc').onchange=function(){stopSay();S.bbSrc=this.value||'';save();renderBb()};
 function pullLessons(){const k=txKey();if(!SHEET_URL||!k)return;
   fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'lessons',key:k})}).then(r=>r.json()).then(j=>{
@@ -565,13 +578,15 @@ $('bbAud').addEventListener('ended',()=>bbListened());
 aud.addEventListener('play',()=>{try{$('bbAud').pause()}catch(e){}msFor(aud,SKIP,'Pimsleur '+lname(playId||S.cur))});
 
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));curTab=b.dataset.t;header();
-  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+b.dataset.t));window.scrollTo(0,0);if(b.dataset.t==='today')drawHero();if(b.dataset.t==='hw')fitHw()});
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+b.dataset.t));window.scrollTo(0,0);if(b.dataset.t==='today')drawHero();if(b.dataset.t==='hw')fitHw();if(b.dataset.t==='track')renderTrack();if(b.dataset.t==='words')renderWords()});
 
-const WI=[0,1,3,7,14,30,60,120],NEW_PER_DAY=10;let wSess=null,wIdx=0,wFlip=false,wDone=0;
+const WI=[0,1,3,7,14,30,60],NEW_PER_DAY=10;let wSess=null,wIdx=0,wFlip=false,wDone=0;
 const addDays=(k,n)=>{const d=pd(k);d.setDate(d.getDate()+n);return iso(d)};
-function wordList(){const seen={},out=[];(D.homework||[]).forEach(h=>(h.words||[]).forEach(s=>{const p=String(s).split(/\s+[—–-]\s+/);if(p.length<2)return;
+function wordList(){const seen={},out=[],t=today();(D.homework||[]).filter(h=>{const o=hwOpen(h);return !o||t>=o}).forEach(h=>(h.words||[]).forEach(s=>{const p=String(s).split(/\s+[—–-]\s+/);if(p.length<2)return;
   let en=p[0].trim(),ipa='';const m=en.match(/^(.*?)\s*[\/\[]([^\/\]]+)[\/\]]\s*$/);if(m){en=m[1].trim();ipa=m[2].trim()}
-  const id=en.toLowerCase();if(!en||seen[id])return;seen[id]=1;out.push({id,en,ipa,ru:p[1].trim(),ex:p.slice(2).join(' — ').trim()})}));return out}
+  const id=en.toLowerCase();if(!en||seen[id])return;seen[id]=1;out.push({id,en,ipa,ru:p[1].trim(),ex:p.slice(2).join(' — ').trim()})}));
+  (D.cards||[]).forEach(c=>{const en=String(c.en||'').trim(),id=en.toLowerCase();if(!en||seen[id])return;seen[id]=1;out.push({id,en,ipa:'',ru:String(c.uk||'').trim(),ex:String(c.ex||'').trim()})});return out}
+function wordsDueText(){try{const q=wQueue();const n=q.due.length+q.nw.length;return n?' · карток: '+n:' · на сьогодні все ✓'}catch(e){return ''}}
 function wSt(){if(!S.words)S.words={};return S.words}
 function wQueue(){const t=today(),ws=wSt(),all=wordList(),due=[],nw=[];const newToday=Object.values(ws).filter(x=>x.first===t).length;
   all.forEach(w=>{const s=ws[w.id];if(s){if(s.due<=t)due.push(w)}else nw.push(w)});
@@ -610,41 +625,45 @@ function audLookup(keys){keys=[...new Set(keys.filter(k=>k&&!(k in AUD)))].slice
         .catch(()=>{})}).then(save).catch(()=>{})}
 function wordAudio(w){const k=audKey(w);if(!k)return Promise.resolve('');if(k in AUD)return Promise.resolve(AUD[k]);
   if(!audBatch)audBatch=audLookup((wSess||[w]).concat([w]).map(audKey)).finally(()=>{audBatch=null});return audBatch.then(()=>AUD[k]||'')}
+let CAUD={};fetch('audio/cards/index.json?v='+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{CAUD=j||{};if($('t-words').classList.contains('on'))renderWords()}).catch(()=>{});
+const cardUrl=txt=>CAUD[String(txt||'').trim().toLowerCase()]||'';
 const AC={};let WA=null;
 function getA(u){if(!AC[u]){const a=new Audio();a.preload='auto';a.src=u;try{a.load()}catch(e){}AC[u]=a}return AC[u]}
-function preloadWord(w){const u=w&&AUD[audKey(w)];if(u)getA(u)}
-function playWord(w,slow){const u=AUD[audKey(w)];if(!u)return;try{WA&&WA.pause()}catch(e){}const a=getA(u);WA=a;try{a.preservesPitch=true;a.webkitPreservesPitch=true}catch(e){}
+const wordUrl=w=>(w&&(AUD[audKey(w)]||(/\s/.test(w.en.trim())?cardUrl(w.en):'')))||'';
+function preloadWord(w){const u=wordUrl(w);if(u)getA(u)}
+function playUrl(u,slow){if(!u)return;try{WA&&WA.pause()}catch(e){}const a=getA(u);WA=a;try{a.preservesPitch=true;a.webkitPreservesPitch=true}catch(e){}try{a.currentTime=0}catch(e){}a.playbackRate=slow?0.6:1;a.play().then(()=>{a.playbackRate=slow?0.6:1}).catch(()=>{})}
+function playWord(w,slow){const u=wordUrl(w);if(!u)return;try{WA&&WA.pause()}catch(e){}const a=getA(u);WA=a;try{a.preservesPitch=true;a.webkitPreservesPitch=true}catch(e){}
   try{a.currentTime=0}catch(e){}a.playbackRate=slow?0.6:1;a.play().then(()=>{a.playbackRate=slow?0.6:1}).catch(()=>{})}
 function wStart(){const q=wQueue();wSess=q.due.concat(q.nw);wIdx=0;wFlip=false;wDone=0;wAgain=new Set();if(wSess.length)wordAudio(wSess[0])}
 function renderWords(){const q=wQueue(),box=$('wCard');
-  $('wStats').innerHTML='<div class="stats"><div><b>'+q.due.length+'</b><span class="lab">повторити</span></div><div><b>'+q.nw.length+'</b><span class="lab">нових сьогодні</span></div><div><b>'+q.learned+' / '+q.all.length+'</b><span class="lab">вивчено</span></div></div>';
+  $('wStats').innerHTML='<div class="stats"><div><b>'+q.due.length+'</b><span class="lab">повторити</span></div><div><b>'+q.nw.length+'</b><span class="lab">нових сьогодні</span></div><div><b>'+q.learned+' / '+q.all.length+'</b><span class="lab">вивчено</span></div></div>'+(wSess&&wSess.length&&!wPractice?'<div class="bar"><i style="width:'+Math.round(Math.min(wIdx,wSess.length)/wSess.length*100)+'%;background:var(--sea)"></i></div>':'');
   if(!q.all.length){box.innerHTML='<h2>Слів ще немає</h2><div class="m">Нові слова з домашки з’являться тут після уроку.</div>';return}
   if(!wSess)wStart();
   if(wIdx>=wSess.length){wPractice=false;const nx=Object.values(wSt()).map(x=>x.due).filter(d=>d>today()).sort()[0];
     box.innerHTML='<h2>На сьогодні все ✓</h2><div class="m">'+(wDone?'Пройдено карток: '+wDone+'. ':'')+(nx?'Наступне повторення: '+esc(nx.split('-').reverse().slice(0,2).join('.'))+'.':'')+'</div>'+(q.newTotal>q.nw.length?'<button class="btn" id="wMore">Ще 5 нових слів (залишилось '+(q.newTotal-q.nw.length)+')</button>':'')+(q.all.length?'<button class="btn sec" id="wPrac">Тренування: усі слова ще раз</button><div class="m" style="margin-top:4px">Тренування не змінює розклад повторень — просто послухати й повторити.</div>':'')+'<button class="btn sec" id="wAgain">Перевірити нові картки</button>';
     $('wAgain').onclick=()=>{wSess=null;renderWords()};if($('wPrac'))$('wPrac').onclick=()=>{wSess=q.all.slice().sort(()=>Math.random()-.5);wIdx=0;wFlip=false;wDone=0;wPractice=true;audLookup(wSess.map(audKey)).then(()=>renderWords());renderWords()};if($('wMore'))$('wMore').onclick=()=>{const t=today(),used=Object.values(wSt()).filter(x=>x.first===t).length;S.wExtra={[t]:Math.max(0,used-NEW_PER_DAY)+5};save();wSess=null;renderWords();renderWordsToday()};return}
-  const w0=wSess[wIdx],w=q.all.find(x=>x.id===w0.id)||w0,s=wSt()[w.id]||{box:0,n:0},ru=!wPractice&&s.box>=2&&s.n%2===1;
-  const ak=audKey(w),known=!ak||(ak in AUD),url=ak?AUD[ak]:'';
+  const w0=wSess[wIdx],w=q.all.find(x=>x.id===w0.id)||w0,s=wSt()[w.id]||{box:0,n:0},ru=true;
+  const ak=audKey(w),known=!ak||(ak in AUD),url=wordUrl(w),exUrl=cardUrl(w.ex);
   const say=url?'<button class="wsay" data-say="1" aria-label="Слухати">🔊</button><button class="wsay slow" data-say="1" data-slow="1" aria-label="Повільно">🐢</button>'
     :(known?'<div class="m" style="font-size:12px">запису вимови немає</div>':'<div class="m" style="font-size:12px">шукаю запис вимови…</div>');
   let h='<div class="m" style="text-align:center">'+(wIdx+1)+' з '+wSess.length+(wPractice?' · тренування':(s.n?'':' · нове слово'))+'</div>';
-  if(!wFlip){h+=ru?'<div class="wfront">'+esc(w.ru)+'</div><div class="m" style="text-align:center">Скажи англійською</div>'
+  if(!wFlip){h+=ru?'<div class="wfront">'+esc(w.ru)+'</div><div class="m" style="text-align:center">Згадай і скажи англійською</div>'
                  :'<div class="wfront">'+esc(w.en)+'</div>'+(w.ipa?'<div class="wipa">/'+esc(w.ipa)+'/</div>':'')+'<div style="text-align:center">'+say+'</div>';
     h+='<button class="btn" id="wShow">Показати відповідь</button>'}
-  else{h+='<div class="wfront">'+esc(w.en)+'</div>'+(w.ipa?'<div class="wipa">/'+esc(w.ipa)+'/</div>':'')+'<div style="text-align:center">'+say+'</div><div class="wback">'+esc(w.ru)+'</div>'+(w.ex?'<div class="wex">'+esc(w.ex)+'</div>':'')+
-    '<div class="btns"><button class="btn sec" id="wNo">Не пам’ятаю</button><button class="btn" id="wYes">Знаю</button></div>'}
+  else{h+='<div class="wfront">'+esc(w.en)+'</div>'+(w.ipa?'<div class="wipa">/'+esc(w.ipa)+'/</div>':'')+'<div style="text-align:center">'+say+'</div><div class="wback">'+esc(w.ru)+'</div>'+(w.ex?'<div class="wex">'+esc(w.ex)+(exUrl?' <button class="wsay sm" data-ex="1" aria-label="Слухати приклад">🔊</button>':'')+'</div>':'')+
+    '<div class="btns"><button class="btn sec" id="wNo">Не пам’ятаю</button><button class="btn sec" id="wHard">Важко</button><button class="btn" id="wYes">Знаю</button></div>'}
   box.innerHTML=h;
-  box.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>playWord(w,!!b.dataset.slow));
-  if(url){preloadWord(w);const nx=wSess[wIdx+1];if(nx)preloadWord(q.all.find(x=>x.id===nx.id)||nx)}
+  box.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>playWord(w,!!b.dataset.slow));box.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>playUrl(exUrl));
+  if(url||exUrl){preloadWord(w);if(exUrl)getA(exUrl);const nx=wSess[wIdx+1];if(nx)preloadWord(q.all.find(x=>x.id===nx.id)||nx)}
   if(!known){const id=w.id;wordAudio(w).then(()=>{const c=wSess&&wSess[wIdx];if(c&&c.id===id)renderWords()})}
   if(!wFlip){$('wShow').onclick=()=>{wFlip=true;renderWords();playWord(w)}}
-  else{const grade=ok=>{if(wPractice){wIdx++;wFlip=false;renderWords();return}const ws=wSt(),t=today(),st=ws[w.id]||(ws[w.id]={box:0,n:0,ok:0,bad:0,first:t});st.n++;
-      if(ok){st.box=Math.min(WI.length-1,st.box+1);st.ok++;st.due=addDays(t,WI[st.box]);const dd=WI[st.box];toast(st.box>=4?'✓ Вивчено! Повторимо через '+dd+' дн.':'✓ Наступний раз — через '+dd+' дн.')}
-      else{st.box=0;st.bad++;st.due=addDays(t,1);if(!wAgain.has(w.id)&&!wSess.slice(wIdx+1).some(x=>x.id===w.id)){wAgain.add(w.id);wSess.push(w);toast('Покажу ще раз наприкінці і завтра')}else toast('Повторимо завтра')}
+  else{const grade=g=>{if(wPractice){wIdx++;wFlip=false;renderWords();return}const ws=wSt(),t=today(),st=ws[w.id]||(ws[w.id]={box:0,n:0,ok:0,bad:0,first:t});st.n++;
+      if(g!=='again'){st.box=g==='good'?Math.min(WI.length-1,Math.max(1,st.box+1)):Math.max(1,st.box);st.ok++;st.due=addDays(t,WI[st.box]);const dd=WI[st.box];toast(st.box>=4?'✓ Вивчено! Повторимо через '+dd+' дн.':'✓ Наступний раз — через '+dd+' дн.')}
+      else{st.box=1;st.bad++;st.due=addDays(t,1);if(!wAgain.has(w.id)&&!wSess.slice(wIdx+1).some(x=>x.id===w.id)){wAgain.add(w.id);wSess.push(w);toast('Покажу ще раз наприкінці і завтра')}else toast('Повторимо завтра')}
       st.last=t;wDone++;wIdx++;wFlip=false;if(wIdx>=wSess.length&&t>=START){const d=S.days[t]||(S.days[t]={});if(!d.words){d.words=true;toast('Слова на сьогодні — готово 🎉')}}
       save();renderWords();renderWordsToday()};
-    $('wNo').onclick=()=>grade(false);$('wYes').onclick=()=>grade(true)}}
-function renderWordsToday(){const el=$('wToday');if(!el)return;const q=wQueue();if(!q.all.length){el.classList.add('hide');return}el.classList.remove('hide');
+    $('wNo').onclick=()=>grade('again');$('wHard').onclick=()=>grade('hard');$('wYes').onclick=()=>grade('good')}}
+function renderWordsToday(){const el=$('wToday');if(!el)return;const q=wQueue();if(!q.all.length||planOf(new Date()).includes('words')){el.classList.add('hide');return}el.classList.remove('hide');
   const n=q.due.length+q.nw.length,done=(S.days[today()]||{}).words;
   el.innerHTML='<div class="task" style="border:0;padding:0"><span class="tag t-pim">W</span><div class="grow">Слова зі звуком<div class="m">'+(n?'Карток на сьогодні: '+n+' · 5–10 хв':'на сьогодні все ✓')+'</div></div>'+(done?'<span class="pill">зроблено</span>':'')+'</div>'+(n?'<button class="btn" id="wGo">Вчити слова</button>':'');
   if(n)$('wGo').onclick=()=>document.querySelector('nav button[data-t="words"]').click()}
@@ -654,7 +673,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-28f';
+const APP_VER='2026-11-28g';
 document.addEventListener('focusin',e=>{if(/^(TEXTAREA|INPUT)$/.test(e.target.tagName))document.body.classList.add('typing')});
 document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||!/^(TEXTAREA|INPUT)$/.test(a.tagName)){document.body.classList.remove('typing');const y=window.scrollY;window.scrollTo(0,y+1);window.scrollTo(0,y)}},120));
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);

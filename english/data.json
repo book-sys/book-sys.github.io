@@ -1,105 +1,90 @@
 {
   "week_text": {
-    "week": 1,
-    "from": "2026-11-25",
-    "theme": "Introductions",
-    "title": "About me",
-    "text": "Hello! My name is Marina. I work at an online school. I work from home. Every morning I have breakfast and then I start work. On Tuesday and Thursday I go to the gym. I study English on Monday, Wednesday and Friday. I want to watch films in English and travel.",
+    "week": 2,
+    "from": "2026-11-29",
+    "theme": "Requests: hotel and café (can / can't)",
+    "title": "Can I…?",
+    "audio": "audio/week-02.mp3",
+    "text": "Good evening! Can I check in, please? Of course. Can I see your passport? Here you are. Can I have breakfast here? Yes, you can. Breakfast is from seven to ten. Great! Can you help me with my bag? Hello! Can I have a coffee and a croissant, please? Sorry, we can't take cards. We only take cash. No problem. Can I have the bill, please?",
     "lines": [
       {
-        "en": "Hello!",
+        "en": "Good evening! Can I check in, please?",
         "pairs": [
           [
-            "Hello!",
-            "Привіт!"
-          ]
-        ],
-        "uk": "Привіт!"
-      },
-      {
-        "en": "My name is Marina.",
-        "pairs": [
-          [
-            "My",
-            "Моє"
+            "Good",
+            "добрий"
           ],
           [
-            "name",
-            "ім'я"
+            "evening!",
+            "вечір!"
           ],
           [
-            "is",
-            "є"
+            "Can",
+            "можу"
           ],
-          [
-            "Marina.",
-            "Марина."
-          ]
-        ],
-        "uk": "Мене звати Марина."
-      },
-      {
-        "en": "I work at an online school.",
-        "pairs": [
           [
             "I",
             "я"
           ],
           [
-            "work",
-            "працюю"
+            "check in,",
+            "заселитися,"
           ],
           [
-            "at",
-            "в"
-          ],
-          [
-            "an",
-            "(одній)"
-          ],
-          [
-            "online",
-            "онлайн"
-          ],
-          [
-            "school.",
-            "школі."
+            "please?",
+            "будь ласка?"
           ]
         ],
-        "uk": "Я працюю в онлайн-школі."
+        "uk": "Добрий вечір! Можна заселитися?"
       },
       {
-        "en": "I work from home.",
+        "en": "Of course. Can I see your passport?",
         "pairs": [
+          [
+            "Of course.",
+            "звісно."
+          ],
+          [
+            "Can",
+            "можу"
+          ],
           [
             "I",
             "я"
           ],
           [
-            "work",
-            "працюю"
+            "see",
+            "бачити"
           ],
           [
-            "from",
-            "з"
+            "your",
+            "ваш"
           ],
           [
-            "home.",
-            "дому."
+            "passport?",
+            "паспорт?"
           ]
         ],
-        "uk": "Я працюю з дому."
+        "uk": "Звісно. Можна ваш паспорт?"
       },
       {
-        "en": "Every morning I have breakfast and then I start work.",
+        "en": "Here you are. Can I have breakfast here?",
         "pairs": [
           [
-            "Every",
-            "кожен"
+            "Here",
+            "ось"
           ],
           [
-            "morning",
-            "ранок"
+            "you",
+            "ви"
+          ],
+          [
+            "are.",
+            "є."
+          ],
+          [
+            "Can",
+            "можу"
           ],
           [
             "I",
@@ -107,160 +92,227 @@
           ],
           [
             "have",
-            "маю"
+            "мати"
           ],
           [
             "breakfast",
             "сніданок"
           ],
           [
-            "and",
-            "і"
-          ],
-          [
-            "then",
-            "тоді"
-          ],
-          [
-            "I",
-            "я"
-          ],
-          [
-            "start",
-            "починаю"
-          ],
-          [
-            "work.",
-            "роботу."
+            "here?",
+            "тут?"
           ]
         ],
-        "uk": "Щоранку я снідаю, а потім починаю працювати."
+        "uk": "Ось, будь ласка. А можна тут поснідати?"
       },
       {
-        "en": "On Tuesday and Thursday I go to the gym.",
+        "en": "Yes, you can. Breakfast is from seven to ten.",
         "pairs": [
           [
-            "On",
-            "в"
+            "Yes,",
+            "так,"
           ],
           [
-            "Tuesday",
-            "вівторок"
+            "you",
+            "ви"
           ],
           [
-            "and",
-            "і"
+            "can.",
+            "можете."
           ],
           [
-            "Thursday",
-            "четвер"
+            "Breakfast",
+            "сніданок"
           ],
           [
-            "I",
-            "я"
+            "is",
+            "є"
           ],
           [
-            "go",
-            "йду"
+            "from",
+            "з"
+          ],
+          [
+            "seven",
+            "сьомої"
           ],
           [
             "to",
             "до"
           ],
           [
+            "ten.",
+            "десятої."
+          ]
+        ],
+        "uk": "Так, можна. Сніданок із сьомої до десятої."
+      },
+      {
+        "en": "Great! Can you help me with my bag?",
+        "pairs": [
+          [
+            "Great!",
+            "чудово!"
+          ],
+          [
+            "Can",
+            "можете"
+          ],
+          [
+            "you",
+            "ви"
+          ],
+          [
+            "help",
+            "допомогти"
+          ],
+          [
+            "me",
+            "мені"
+          ],
+          [
+            "with",
+            "з"
+          ],
+          [
+            "my",
+            "моєю"
+          ],
+          [
+            "bag?",
+            "сумкою?"
+          ]
+        ],
+        "uk": "Чудово! Допоможете мені із сумкою?"
+      },
+      {
+        "en": "Hello! Can I have a coffee and a croissant, please?",
+        "pairs": [
+          [
+            "Hello!",
+            "привіт!"
+          ],
+          [
+            "Can",
+            "можу"
+          ],
+          [
+            "I",
+            "я"
+          ],
+          [
+            "have",
+            "мати"
+          ],
+          [
+            "a",
+            "(одну)"
+          ],
+          [
+            "coffee",
+            "каву"
+          ],
+          [
+            "and",
+            "і"
+          ],
+          [
+            "a",
+            "(один)"
+          ],
+          [
+            "croissant,",
+            "круасан,"
+          ],
+          [
+            "please?",
+            "будь ласка?"
+          ]
+        ],
+        "uk": "Добрий день! Можна каву й круасан, будь ласка?"
+      },
+      {
+        "en": "Sorry, we can't take cards. We only take cash.",
+        "pairs": [
+          [
+            "Sorry,",
+            "вибачте,"
+          ],
+          [
+            "we",
+            "ми"
+          ],
+          [
+            "can't",
+            "не можемо"
+          ],
+          [
+            "take",
+            "брати"
+          ],
+          [
+            "cards.",
+            "картки."
+          ],
+          [
+            "We",
+            "ми"
+          ],
+          [
+            "only",
+            "тільки"
+          ],
+          [
+            "take",
+            "беремо"
+          ],
+          [
+            "cash.",
+            "готівку."
+          ]
+        ],
+        "uk": "Вибачте, ми не приймаємо картки. Тільки готівку."
+      },
+      {
+        "en": "No problem. Can I have the bill, please?",
+        "pairs": [
+          [
+            "No",
+            "ніяка"
+          ],
+          [
+            "problem.",
+            "проблема."
+          ],
+          [
+            "Can",
+            "можу"
+          ],
+          [
+            "I",
+            "я"
+          ],
+          [
+            "have",
+            "мати"
+          ],
+          [
             "the",
-            "(того)"
+            "(той)"
           ],
           [
-            "gym.",
-            "спортзалу."
+            "bill,",
+            "рахунок,"
+          ],
+          [
+            "please?",
+            "будь ласка?"
           ]
         ],
-        "uk": "У вівторок і четвер я ходжу в спортзал."
-      },
-      {
-        "en": "I study English on Monday, Wednesday and Friday.",
-        "pairs": [
-          [
-            "I",
-            "я"
-          ],
-          [
-            "study",
-            "вчу"
-          ],
-          [
-            "English",
-            "англійську"
-          ],
-          [
-            "on",
-            "в"
-          ],
-          [
-            "Monday,",
-            "понеділок,"
-          ],
-          [
-            "Wednesday",
-            "середу"
-          ],
-          [
-            "and",
-            "і"
-          ],
-          [
-            "Friday.",
-            "п'ятницю."
-          ]
-        ],
-        "uk": "Я вчу англійську в понеділок, середу і п'ятницю."
-      },
-      {
-        "en": "I want to watch films in English and travel.",
-        "pairs": [
-          [
-            "I",
-            "я"
-          ],
-          [
-            "want",
-            "хочу"
-          ],
-          [
-            "to",
-            "(щоб)"
-          ],
-          [
-            "watch",
-            "дивитися"
-          ],
-          [
-            "films",
-            "фільми"
-          ],
-          [
-            "in",
-            "в"
-          ],
-          [
-            "English",
-            "англійській"
-          ],
-          [
-            "and",
-            "і"
-          ],
-          [
-            "travel.",
-            "подорожувати."
-          ]
-        ],
-        "uk": "Я хочу дивитися фільми англійською і подорожувати."
+        "uk": "Без проблем. Можна рахунок, будь ласка?"
       }
     ],
-    "audio": "audio/week-01.mp3",
-    "timing": "audio/week-01.json"
+    "timing": "audio/week-02.json"
   },
   "homework": [
     {
