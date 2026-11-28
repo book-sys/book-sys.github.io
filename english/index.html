@@ -83,7 +83,9 @@ audio{width:100%;margin-top:10px}
 .ls.cur{border-color:var(--coral);border-width:3px}
 .ls.has::before{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--sea)}.ls.done.has::before{background:#fff}
 .ls.part::after{content:"";position:absolute;left:7px;right:7px;bottom:6px;height:3px;border-radius:2px;background:var(--coral)}
-textarea{width:100%;min-height:70px;border:1px solid var(--ln);border-radius:12px;padding:9px 11px;font:16px/1.45 inherit;font-family:inherit;background:var(--bg);color:var(--ink);margin-top:6px}
+textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12px;padding:10px 12px;font-family:inherit;font-size:18px;line-height:1.45;background:var(--bg);color:var(--ink);margin-top:6px}
+.hintbtn{border:0;background:none;color:var(--mu);font:inherit;font-size:13px;padding:4px 0;cursor:pointer;opacity:.8}
+.hintbtn b{display:inline-grid;place-items:center;width:17px;height:17px;border:1.5px solid currentColor;border-radius:50%;font-size:11px;margin-right:5px;vertical-align:1px}
 .q{padding:12px 0;border-top:1px solid var(--ln)}.q:first-of-type{border-top:0}
 .txt{font-size:19px;line-height:1.75}
 .txt span{border-radius:4px;transition:background .2s}.txt span.hl{background:var(--sun);color:#3a2a00}
@@ -422,14 +424,17 @@ $('ptBtn').onclick=()=>{ptEditing=$('ptEdit').classList.contains('hide');renderP
 $('ptEdit').oninput=function(){L(S.cur).text=this.value;save();$('ptBtn').classList.remove('hide');$('ptBtn').textContent='Готово';$('ptToggle').textContent='Сховати текст уроку'+(this.value?'':' · порожньо')};
 $('ptEdit').onblur=()=>{if(L(S.cur).text){ptEditing=false;setTimeout(()=>renderPt(L(S.cur)),150)}};
 
+function fitTa(t){if(!t.offsetParent)return;t.style.height='auto';t.style.height=(t.scrollHeight+2)+'px'}
+function fitHw(){$('hwBox').querySelectorAll('textarea').forEach(fitTa)}
 function renderHw(){const H=D.homework||[];
   if(!H.length){$('hwBox').innerHTML='<div class="card"><h2>Поки що порожньо</h2><div class="m">Домашка з’явиться тут після уроку.</div></div>';return}
   $('hwBox').innerHTML=H.slice().reverse().map(w=>{const a=S.ans[w.id]||{};
     return '<div class="card"><div class="m">'+esc(w.date)+(a._done?' <span class="pill">здано</span>':'')+'</div><h2 style="margin-top:2px">'+esc(w.title)+'</h2>'+
-    (w.tasks||[]).map((t,i)=>'<div class="q"><div>'+(i+1)+'. '+esc(t.q)+'</div>'+(t.hint?'<div class="m">'+esc(t.hint)+'</div>':'')+'<textarea data-w="'+esc(w.id)+'" data-i="'+i+'" placeholder="Твоя відповідь">'+esc(a[i]||'')+'</textarea></div>').join('')+
+    (w.tasks||[]).map((t,i)=>'<div class="q"><div>'+(i+1)+'. '+esc(t.q)+'</div>'+(t.hint?'<button class="hintbtn" data-hint="1"><b>?</b>підказка</button><div class="m hide">'+esc(t.hint)+'</div>':'')+'<textarea data-w="'+esc(w.id)+'" data-i="'+i+'" placeholder="Твоя відповідь">'+esc(a[i]||'')+'</textarea></div>').join('')+
     ((w.words||[]).length?'<div class="q"><b>Нові слова</b><div class="m">'+w.words.map(esc).join('<br>')+'</div></div>':'')+
     '<button class="btn" data-copy="'+esc(w.id)+'">Скопіювати відповіді для Claude</button><button class="btn sec" data-done="'+esc(w.id)+'">'+(a._done?'Зроблено ✓':'Позначити як зроблене')+'</button><div class="m" style="margin-top:8px">Скопіюй відповіді й встав у чат уроку — Claude їх перевірить. «Позначити як зроблене» — домашка зарахується в трекері.</div></div>'}).join('');
-  $('hwBox').querySelectorAll('textarea').forEach(t=>t.oninput=()=>{const a=S.ans[t.dataset.w]||(S.ans[t.dataset.w]={});a[t.dataset.i]=t.value;save()});
+  $('hwBox').querySelectorAll('[data-hint]').forEach(b=>b.onclick=()=>{const h=b.nextElementSibling,open=h.classList.toggle('hide');b.innerHTML=open?'<b>?</b>підказка':'<b>?</b>сховати'});
+  fitHw();$('hwBox').querySelectorAll('textarea').forEach(t=>t.oninput=()=>{fitTa(t);const a=S.ans[t.dataset.w]||(S.ans[t.dataset.w]={});a[t.dataset.i]=t.value;save()});
   $('hwBox').querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{const w=H.find(x=>x.id===b.dataset.copy),a=S.ans[w.id]||{};
     copy(('Homework: '+w.title+' ('+(w.date||'')+')\n\n'+(w.tasks||[]).map((t,i)=>(i+1)+'. '+t.q+'\nAnswer: '+(a[i]||'—')).join('\n\n')).trim())});
   $('hwBox').querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>{const a=S.ans[b.dataset.done]||(S.ans[b.dataset.done]={});a._done=!a._done;if(a._done)markToday('hw');save();renderAll()})}
@@ -451,7 +456,7 @@ $('bbSay').onclick=async()=>{if(speaking)return stopSay();const w=D.week_text;if
   stopSay();toast('Озвучка тут недоступна — скористайся T³')};
 
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
-  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+b.dataset.t));window.scrollTo(0,0);if(b.dataset.t==='today')drawHero()});
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+b.dataset.t));window.scrollTo(0,0);if(b.dataset.t==='today')drawHero();if(b.dataset.t==='hw')fitHw()});
 
 const WI=[0,1,3,7,14,30,60,120],NEW_PER_DAY=10;let wSess=null,wIdx=0,wFlip=false,wDone=0;
 const addDays=(k,n)=>{const d=pd(k);d.setDate(d.getDate()+n);return iso(d)};
@@ -540,7 +545,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-27l';
+const APP_VER='2026-11-28a';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
