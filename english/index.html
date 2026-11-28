@@ -472,7 +472,7 @@ function renderHw(){const H=D.homework||[];
 let rate=0.8,speaking=false,tts=null,bbLoop=false,bbStep=null,bbRun=0;
 try{if(S.bbRate)rate=+S.bbRate}catch(e){}
 let LESSONS=[];try{LESSONS=JSON.parse(localStorage.getItem(KEY+'-lessons'))||[]}catch(e){}
-const curLesson=()=>S.bbSrc?LESSONS.find(x=>x.id===S.bbSrc)||null:null;
+const curLesson=()=>{const id=S.bbSrc===undefined?(LESSONS.length?LESSONS[LESSONS.length-1].id:''):S.bbSrc;return id?LESSONS.find(x=>x.id===id)||null:null};
 function bbLines(){const ls=curLesson();const w=ls?{lines:ls.lines||[],text:''}:D.week_text;if(!w)return[];const sp=s=>s.split(/\s+/).filter(Boolean).map(x=>[x,'']);
   if(w.lines&&w.lines.length)return w.lines.map(l=>({en:l.en||'',pairs:l.pairs&&l.pairs.length?l.pairs:sp(l.en||''),uk:l.uk||''}));
   return (String(w.text||'').match(/[^.!?]+[.!?]*/g)||[]).map(s=>s.trim()).filter(Boolean).map(s=>({en:s,pairs:sp(s),uk:''}))}
@@ -486,7 +486,7 @@ function renderBbProg(){const o=bbW();
 const lineHtml=(l,i)=>'<div class="ln" data-l="'+i+'"><div class="ws">'+l.pairs.map((p,j)=>'<span class="wp" data-w="'+j+'"><span class="e">'+esc(p[0])+'</span><span class="t">'+(p[1]?esc(p[1]):'&nbsp;')+'</span></span>').join('')+'</div>'+(l.uk?'<div class="uk">'+esc(l.uk)+'</div>':'')+'</div>';
 function renderBb(){const ls=curLesson(),wt=D.week_text,L=bbLines();
   const sel=$('bbSrc');$('bbSrcRow').classList.toggle('hide',!LESSONS.length);
-  if(LESSONS.length){sel.innerHTML='<option value="">Текст тижня'+(wt?' · '+esc(wt.title||''):'')+'</option>'+LESSONS.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===S.bbSrc?' selected':'')+'>'+esc((x.src?x.src+' · ':'')+x.title)+'</option>').join('')}
+  if(LESSONS.length){sel.innerHTML='<option value="">Текст тижня'+(wt?' · '+esc(wt.title||''):'')+'</option>'+LESSONS.map(x=>'<option value="'+esc(x.id)+'"'+(curLesson()&&x.id===curLesson().id?' selected':'')+'>'+esc((x.src?x.src+' · ':'')+x.title)+'</option>').join('')}
   const w=ls?{week:'',theme:'',title:ls.title,text:'',audio:''}:wt;if(!w){$('bbTitle').textContent='Тексту ще немає';return}
   $('bbSrcNote').classList.toggle('hide',!ls);if(ls)$('bbSrcNote').innerHTML=esc([ls.src,ls.level,ls.theme].filter(Boolean).join(' · '))+(ls.link?' · <a href="'+esc(ls.link)+'" target="_blank" rel="noopener">джерело</a>':'')+(L.length?'':' · текст ще не додано');
   if(!ls&&w.timing&&bbTUrl!==w.timing)bbTiming();$('bbVoiceRow').classList.toggle('hide',!!BBT||!!ls);
@@ -560,7 +560,7 @@ try{new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&bbStep==='
 function msFor(el,step,title){try{const ms=navigator.mediaSession;ms.metadata=new MediaMetadata({title,artist:'English',artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}]});
   ms.setActionHandler('play',()=>el.play());ms.setActionHandler('pause',()=>el.pause());
   ms.setActionHandler('seekbackward',()=>{el.currentTime=Math.max(0,el.currentTime-step)});ms.setActionHandler('seekforward',()=>{el.currentTime=Math.min((el.duration||1e9)-0.5,el.currentTime+step)})}catch(e){}}
-$('bbAud').addEventListener('play',()=>{stopSay();try{aud.pause()}catch(e){}const w=D.week_text||{};msFor($('bbAud'),10,'Week '+w.week+' · '+(w.title||''))});
+$('bbAud').addEventListener('play',()=>{if(!curLesson())stopSay();else{try{LA.pause()}catch(e){}try{speechSynthesis.cancel()}catch(e){}speaking=true;$('bbSay').textContent='■ Стоп'}try{aud.pause()}catch(e){}const w=D.week_text||{};msFor($('bbAud'),10,'Week '+w.week+' · '+(w.title||''))});
 $('bbAud').addEventListener('ended',()=>bbListened());
 aud.addEventListener('play',()=>{try{$('bbAud').pause()}catch(e){}msFor(aud,SKIP,'Pimsleur '+lname(playId||S.cur))});
 
@@ -654,7 +654,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-28e';
+const APP_VER='2026-11-28f';
 document.addEventListener('focusin',e=>{if(/^(TEXTAREA|INPUT)$/.test(e.target.tagName))document.body.classList.add('typing')});
 document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||!/^(TEXTAREA|INPUT)$/.test(a.tagName)){document.body.classList.remove('typing');const y=window.scrollY;window.scrollTo(0,y+1);window.scrollTo(0,y)}},120));
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
