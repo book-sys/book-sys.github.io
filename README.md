@@ -11,7 +11,7 @@
 
 ### Аудіо тексту тижня (щотижня)
 
-`english/tools/make_week_audio.py` бере `week_text` з `data.json`, озвучує кожне речення через edge-tts (`en-US-JennyNeural`, −15 %, пауза ~1,2 с) і робить `english/audio/week-NN.mp3`, а в `week_text` дописує `"audio"`.
+`english/tools/make_week_audio.py` бере `week_text` з `data.json`, озвучує кожне речення через edge-tts (`en-US-JennyNeural`, −15 %) і робить `english/audio/week-NN-sII.mp3` (по реченню, для «Слухання» з підсвіткою), `week-NN.json` (час кожного слова) і `week-NN.mp3` (увесь текст з паузами ~1,2 с, для фонового слухання), а в `week_text` дописує `"audio"` і `"timing"`.
 
 ```
 pip install edge-tts        # один раз; ще потрібен ffmpeg

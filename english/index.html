@@ -240,7 +240,7 @@ textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12p
     <div class="pills" style="margin-top:10px"><span class="m">Швидкість</span><button class="pill2" data-r="0.7">0.7×</button><button class="pill2" data-r="0.8">0.8×</button><button class="pill2" data-r="1">1×</button><button class="pill2" id="bbLoop">↻ По колу</button></div>
     <div id="bbLis" style="margin-top:8px"></div>
     <div id="bbAudBox" class="hide" style="margin-top:12px"><div class="m">Запис для фонового слухання — грає і з вимкненим екраном:</div><audio id="bbAud" controls preload="none"></audio></div>
-    <div class="kv" style="align-items:center;gap:10px;margin-top:12px"><span>Голос для «Слухати»</span><select id="wVoice" class="vsel"></select></div>
+    <div class="kv" id="bbVoiceRow" style="align-items:center;gap:10px;margin-top:12px"><span>Голос для «Слухати»</span><select id="wVoice" class="vsel"></select></div>
   </div>
   <div class="card hide" id="bbS">
     <div class="m">Прочитай уголос, без перекладу. Натисни на речення, щоб послухати.</div>
@@ -481,6 +481,7 @@ function renderBbProg(){const o=bbW();
   $('bbDDone').textContent=o.d?'Розбір зараховано ✓':'Розібрала ✓';$('bbSDone').textContent=o.s?'Вголос зараховано ✓':'Прочитала вголос ✓'}
 const lineHtml=(l,i)=>'<div class="ln" data-l="'+i+'"><div class="ws">'+l.pairs.map((p,j)=>'<span class="wp" data-w="'+j+'"><span class="e">'+esc(p[0])+'</span><span class="t">'+(p[1]?esc(p[1]):'&nbsp;')+'</span></span>').join('')+'</div>'+(l.uk?'<div class="uk">'+esc(l.uk)+'</div>':'')+'</div>';
 function renderBb(){const w=D.week_text,L=bbLines();if(!w){$('bbTitle').textContent='Тексту ще немає';return}
+  if(w.timing&&bbTUrl!==w.timing)bbTiming();$('bbVoiceRow').classList.toggle('hide',!!BBT);
   $('bbMeta').textContent='Тиждень '+w.week+' · '+(w.theme||'');$('bbTitle').textContent=w.title||'';
   if(!bbStep)bbStep=bbDefault();
   document.querySelectorAll('#bbSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===bbStep));
@@ -498,15 +499,28 @@ function renderBb(){const w=D.week_text,L=bbLines();if(!w){$('bbTitle').textCont
 function hlWord(box,li,wi){box.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));box.querySelectorAll('.cur').forEach(x=>x.classList.remove('cur'));if(li<0)return;
   const ln=box.querySelector('[data-l="'+li+'"]');if(!ln)return;ln.classList.add(ln.tagName==='SPAN'?'hl':'cur');if(wi>=0){const x=ln.querySelector('.wp[data-w="'+wi+'"]');if(x)x.classList.add('hl')}}
 function offsets(l){let pos=0;return l.pairs.map(p=>{const i=l.en.indexOf(p[0],pos);const at=i<0?pos:i;pos=at+p[0].length;return at})}
-function speakLine(li,box,done){const l=bbLines()[li];if(!l||!window.speechSynthesis){done&&done(true);return}const off=offsets(l);
+let BBT=null,bbTUrl='',bbRaf=0;const LA=new Audio();LA.preload='auto';
+function bbTiming(){const w=D.week_text||{};if(!w.timing){BBT=null;return Promise.resolve(null)}if(bbTUrl===w.timing&&BBT)return Promise.resolve(BBT);
+  bbTUrl=w.timing;return fetch(w.timing+'?v='+(w.week||0)).then(r=>r.ok?r.json():null).then(j=>{BBT=j;renderBb();return j}).catch(()=>null)}
+const nrm=x=>String(x).toLowerCase().replace(/[^a-z0-9']/g,'');
+function alignWords(words,pairs){let j=0;return words.map(w=>{const n=nrm(w[2]);for(let k=j;k<pairs.length;k++){const q=nrm(pairs[k][0]);if(q===n||(n&&q.startsWith(n))){j=k+1;return k}}return -1})}
+const playRate=()=>({0.7:0.85,0.8:1,1:1.2})[rate]||1;
+function speakLine(li,box,done){const l=bbLines()[li];if(!l){done&&done(true);return}
+  const T=BBT&&BBT.lines&&BBT.lines[li];
+  if(T){const idx=alignWords(T.words||[],l.pairs);cancelAnimationFrame(bbRaf);try{LA.pause()}catch(e){}
+    LA.src=T.file;try{LA.preservesPitch=true;LA.webkitPreservesPitch=true}catch(e){}LA.playbackRate=playRate();hlWord(box,li,-1);
+    const tick=()=>{const t=LA.currentTime*1000;let wi=-1;(T.words||[]).forEach((w,k)=>{if(w[0]<=t&&idx[k]>=0)wi=idx[k]});hlWord(box,li,wi);if(!LA.paused&&!LA.ended)bbRaf=requestAnimationFrame(tick)};
+    LA.onplay=()=>{bbRaf=requestAnimationFrame(tick)};LA.onended=()=>{cancelAnimationFrame(bbRaf);done&&done(false)};LA.onerror=()=>{cancelAnimationFrame(bbRaf);toast('Запис не завантажився — перевір інтернет');done&&done(true)};
+    LA.play().then(()=>{LA.playbackRate=playRate()}).catch(()=>{done&&done(true)});return}
+  if(!window.speechSynthesis){done&&done(true);return}const off=offsets(l);
   const u=new SpeechSynthesisUtterance(l.en);u.lang='en-US';u.rate=rate;const v=enVoice();if(v)u.voice=v;
   u.onstart=()=>hlWord(box,li,-1);
   u.onboundary=e=>{if(e.name&&e.name!=='word')return;let wi=0;for(let j=0;j<off.length;j++)if(off[j]<=e.charIndex)wi=j;hlWord(box,li,wi)};
   u.onend=()=>done&&done(false);u.onerror=()=>done&&done(true);speechSynthesis.speak(u)}
-function stopSay(){speaking=false;bbRun++;try{speechSynthesis.cancel()}catch(e){}['bbDec','bbLis','bbSp'].forEach(id=>hlWord($(id),-1,-1));$('bbSay').textContent='▶ Слухати'}
-function sayLine(i,box){stopSay();if(!window.speechSynthesis){toast('Озвучка тут недоступна');return}speakLine(i,box,()=>hlWord(box,-1,-1))}
+function stopSay(){speaking=false;bbRun++;cancelAnimationFrame(bbRaf);try{LA.pause()}catch(e){}LA.onended=null;LA.onerror=null;try{speechSynthesis.cancel()}catch(e){}['bbDec','bbLis','bbSp'].forEach(id=>hlWord($(id),-1,-1));$('bbSay').textContent='▶ Слухати'}
+function sayLine(i,box){stopSay();if(!BBT&&!window.speechSynthesis){toast('Озвучка тут недоступна');return}speakLine(i,box,()=>hlWord(box,-1,-1))}
 function bbListened(){const o=bbW();o.l=(o.l||0)+1;bbMarkDay();save();toast('Прослуховування зараховано: '+o.l+'/5');renderBbProg()}
-function bbPlayAll(){if(!window.speechSynthesis){toast('Озвучка тут недоступна');return}stopSay();speaking=true;const run=++bbRun,box=$('bbLis'),L=bbLines();let i=0;$('bbSay').textContent='■ Стоп';
+function bbPlayAll(){if(!BBT&&!window.speechSynthesis){toast('Озвучка тут недоступна');return}stopSay();speaking=true;const run=++bbRun,box=$('bbLis'),L=bbLines();let i=0;$('bbSay').textContent='■ Стоп';
   const next=err=>{if(!speaking||run!==bbRun)return;if(err)return stopSay();
     if(i>=L.length){bbListened();if(bbLoop){i=0;setTimeout(()=>next(false),1200);return}return stopSay()}
     const li=i++;speakLine(li,box,e=>setTimeout(()=>next(e),350))};setTimeout(()=>next(false),200)}
@@ -616,7 +630,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-28c';
+const APP_VER='2026-11-28d';
 document.addEventListener('focusin',e=>{if(/^(TEXTAREA|INPUT)$/.test(e.target.tagName))document.body.classList.add('typing')});
 document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!a||!/^(TEXTAREA|INPUT)$/.test(a.tagName)){document.body.classList.remove('typing');const y=window.scrollY;window.scrollTo(0,y+1);window.scrollTo(0,y)}},120));
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);

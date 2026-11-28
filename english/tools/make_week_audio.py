@@ -1,8 +1,11 @@
-"""Make the background-listening MP3 for the text of the week.
+"""Make the audio for the text of the week (Birkenbihl tab).
 
 Reads week_text from english/data.json, voices every sentence with edge-tts
-(en-US-JennyNeural, rate -15%), joins them with ~1.2 s pauses and writes
-english/audio/week-NN.mp3. Then puts "audio": "audio/week-NN.mp3" into week_text.
+(en-US-JennyNeural, rate -15%) and writes:
+  english/audio/week-NN-sII.mp3  one file per sentence (played in «Слухання», tap on a sentence)
+  english/audio/week-NN.json     word timings for highlighting
+  english/audio/week-NN.mp3      the whole text with ~1.2 s pauses (background listening)
+Then puts "audio" and "timing" into week_text.
 
     python english/tools/make_week_audio.py           # only if the text changed
     python english/tools/make_week_audio.py --force   # always rebuild
@@ -37,8 +40,18 @@ def sentences(wt):
 
 
 async def tts(text, path):
+    """Voice one sentence into path; return word timings [[start_ms, end_ms, word], ...]."""
     import edge_tts
-    await edge_tts.Communicate(text, VOICE, rate=RATE).save(path)
+    words, audio = [], bytearray()
+    async for ch in edge_tts.Communicate(text, VOICE, rate=RATE, boundary='WordBoundary').stream():
+        if ch['type'] == 'audio':
+            audio += ch['data']
+        elif ch['type'] == 'WordBoundary':
+            st = round(ch['offset'] / 10000)
+            words.append([st, st + round(ch['duration'] / 10000), ch['text']])
+    with open(path, 'wb') as f:
+        f.write(bytes(audio))
+    return words
 
 
 def main():
@@ -53,22 +66,28 @@ def main():
         print('no text of the week'); return
     week = int(wt.get('week', 0))
     name = 'week-%02d.mp3' % week
+    tname = 'week-%02d.json' % week
     out = os.path.join(AUDIO_DIR, name)
+    tout = os.path.join(AUDIO_DIR, tname)
     stamp = os.path.join(AUDIO_DIR, 'week-%02d.txt' % week)
-    digest = hashlib.sha1(json.dumps([VOICE, RATE, PAUSE, lines], ensure_ascii=False).encode('utf-8')).hexdigest()
+    digest = hashlib.sha1(json.dumps(['v2', VOICE, RATE, PAUSE, lines], ensure_ascii=False).encode('utf-8')).hexdigest()
 
-    fresh = os.path.exists(out) and os.path.exists(stamp) and open(stamp, encoding='utf-8').read().strip() == digest
+    fresh = all(os.path.exists(x) for x in (out, tout, stamp)) and open(stamp, encoding='utf-8').read().strip() == digest
     if fresh and not a.force:
         print('up to date:', name)
     else:
         os.makedirs(AUDIO_DIR, exist_ok=True)
         ff = find_ffmpeg()
+        for old in glob.glob(os.path.join(AUDIO_DIR, 'week-%02d-s*.mp3' % week)):
+            os.remove(old)
+        timing = {'week': week, 'lines': []}
+        parts = []
+        for i, s in enumerate(lines):
+            fn = 'week-%02d-s%02d.mp3' % (week, i)
+            p = os.path.join(AUDIO_DIR, fn)
+            timing['lines'].append({'file': 'audio/' + fn, 'words': asyncio.run(tts(s, p))})
+            parts.append(p)
         with tempfile.TemporaryDirectory() as tmp:
-            parts = []
-            for i, s in enumerate(lines):
-                p = os.path.join(tmp, 's%03d.mp3' % i)
-                asyncio.run(tts(s, p))
-                parts.append(p)
             sil = os.path.join(tmp, 'pause.mp3')
             subprocess.run([ff, '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anullsrc=r=24000:cl=mono',
                             '-t', str(PAUSE), '-c:a', 'libmp3lame', '-b:a', '48k', sil], check=True)
@@ -82,16 +101,19 @@ def main():
             subprocess.run([ff, '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', lst,
                             '-c:a', 'libmp3lame', '-b:a', '64k', '-ar', '24000', '-ac', '1',
                             '-metadata', 'title=' + title, '-metadata', 'artist=English', out], check=True)
-        open(stamp, 'w', encoding='utf-8').write(digest + '\n')
-        print('made:', name, '(%d sentences)' % len(lines))
+        with open(tout, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(json.dumps(timing, ensure_ascii=False) + '\n')
+        with open(stamp, 'w', encoding='utf-8') as f:
+            f.write(digest + '\n')
+        print('made:', name, '+', len(parts), 'sentence files + timings')
 
-    rel = 'audio/' + name
-    if wt.get('audio') != rel:
-        wt['audio'] = rel
+    rel, trel = 'audio/' + name, 'audio/' + tname
+    if wt.get('audio') != rel or wt.get('timing') != trel:
+        wt['audio'], wt['timing'] = rel, trel
         data['week_text'] = wt
         with open(DATA, 'w', encoding='utf-8', newline='\n') as f:
             f.write(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-        print('data.json: week_text.audio =', rel)
+        print('data.json: week_text.audio + timing')
 
 
 if __name__ == '__main__':

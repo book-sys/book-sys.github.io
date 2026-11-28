@@ -259,7 +259,8 @@
         "uk": "Я хочу дивитися фільми англійською і подорожувати."
       }
     ],
-    "audio": "audio/week-01.mp3"
+    "audio": "audio/week-01.mp3",
+    "timing": "audio/week-01.json"
   },
   "homework": [
     {
