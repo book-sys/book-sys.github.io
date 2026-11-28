@@ -4,7 +4,262 @@
     "from": "2026-11-25",
     "theme": "Introductions",
     "title": "About me",
-    "text": "Hello! My name is Marina. I am thirty years old. I live in Odesa with my husband, Vlad. I work at an online photo school. I work from home. Every morning I have breakfast and then I start work. On Tuesday and Thursday I go to the gym. I study English on Monday, Wednesday and Friday. I want to watch films in English and travel."
+    "text": "Hello! My name is Marina. I work at an online school. I work from home. Every morning I have breakfast and then I start work. On Tuesday and Thursday I go to the gym. I study English on Monday, Wednesday and Friday. I want to watch films in English and travel.",
+    "lines": [
+      {
+        "en": "Hello!",
+        "pairs": [
+          [
+            "Hello!",
+            "Привіт!"
+          ]
+        ],
+        "uk": "Привіт!"
+      },
+      {
+        "en": "My name is Marina.",
+        "pairs": [
+          [
+            "My",
+            "Моє"
+          ],
+          [
+            "name",
+            "ім'я"
+          ],
+          [
+            "is",
+            "є"
+          ],
+          [
+            "Marina.",
+            "Марина."
+          ]
+        ],
+        "uk": "Мене звати Марина."
+      },
+      {
+        "en": "I work at an online school.",
+        "pairs": [
+          [
+            "I",
+            "я"
+          ],
+          [
+            "work",
+            "працюю"
+          ],
+          [
+            "at",
+            "в"
+          ],
+          [
+            "an",
+            "(одній)"
+          ],
+          [
+            "online",
+            "онлайн"
+          ],
+          [
+            "school.",
+            "школі."
+          ]
+        ],
+        "uk": "Я працюю в онлайн-школі."
+      },
+      {
+        "en": "I work from home.",
+        "pairs": [
+          [
+            "I",
+            "я"
+          ],
+          [
+            "work",
+            "працюю"
+          ],
+          [
+            "from",
+            "з"
+          ],
+          [
+            "home.",
+            "дому."
+          ]
+        ],
+        "uk": "Я працюю з дому."
+      },
+      {
+        "en": "Every morning I have breakfast and then I start work.",
+        "pairs": [
+          [
+            "Every",
+            "кожен"
+          ],
+          [
+            "morning",
+            "ранок"
+          ],
+          [
+            "I",
+            "я"
+          ],
+          [
+            "have",
+            "маю"
+          ],
+          [
+            "breakfast",
+            "сніданок"
+          ],
+          [
+            "and",
+            "і"
+          ],
+          [
+            "then",
+            "тоді"
+          ],
+          [
+            "I",
+            "я"
+          ],
+          [
+            "start",
+            "починаю"
+          ],
+          [
+            "work.",
+            "роботу."
+          ]
+        ],
+        "uk": "Щоранку я снідаю, а потім починаю працювати."
+      },
+      {
+        "en": "On Tuesday and Thursday I go to the gym.",
+        "pairs": [
+          [
+            "On",
+            "в"
+          ],
+          [
+            "Tuesday",
+            "вівторок"
+          ],
+          [
+            "and",
+            "і"
+          ],
+          [
+            "Thursday",
+            "четвер"
+          ],
+          [
+            "I",
+            "я"
+          ],
+          [
+            "go",
+            "йду"
+          ],
+          [
+            "to",
+            "до"
+          ],
+          [
+            "the",
+            "(того)"
+          ],
+          [
+            "gym.",
+            "спортзалу."
+          ]
+        ],
+        "uk": "У вівторок і четвер я ходжу в спортзал."
+      },
+      {
+        "en": "I study English on Monday, Wednesday and Friday.",
+        "pairs": [
+          [
+            "I",
+            "я"
+          ],
+          [
+            "study",
+            "вчу"
+          ],
+          [
+            "English",
+            "англійську"
+          ],
+          [
+            "on",
+            "в"
+          ],
+          [
+            "Monday,",
+            "понеділок,"
+          ],
+          [
+            "Wednesday",
+            "середу"
+          ],
+          [
+            "and",
+            "і"
+          ],
+          [
+            "Friday.",
+            "п'ятницю."
+          ]
+        ],
+        "uk": "Я вчу англійську в понеділок, середу і п'ятницю."
+      },
+      {
+        "en": "I want to watch films in English and travel.",
+        "pairs": [
+          [
+            "I",
+            "я"
+          ],
+          [
+            "want",
+            "хочу"
+          ],
+          [
+            "to",
+            "(щоб)"
+          ],
+          [
+            "watch",
+            "дивитися"
+          ],
+          [
+            "films",
+            "фільми"
+          ],
+          [
+            "in",
+            "в"
+          ],
+          [
+            "English",
+            "англійській"
+          ],
+          [
+            "and",
+            "і"
+          ],
+          [
+            "travel.",
+            "подорожувати."
+          ]
+        ],
+        "uk": "Я хочу дивитися фільми англійською і подорожувати."
+      }
+    ],
+    "audio": "audio/week-01.mp3"
   },
   "homework": [
     {

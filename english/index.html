@@ -92,6 +92,14 @@ textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12p
 .pill{display:inline-block;font-size:12px;padding:2px 10px;border-radius:20px;background:var(--okbg);color:var(--sea);font-weight:700}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 .toast.on{opacity:1}
+.seg{display:flex;gap:4px;background:var(--s0);border-radius:14px;padding:4px;margin-top:12px}.seg button{flex:1;border:0;background:none;border-radius:10px;padding:9px 4px;font:inherit;font-weight:600;color:var(--mu)}.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.pills{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.pill2{border:1.5px solid var(--ln);background:none;color:var(--mu);border-radius:20px;padding:6px 12px;font:inherit;font-size:14px}.pill2.on{border-color:var(--sea);color:var(--sea);background:var(--okbg)}
+.ln{padding:12px 6px;margin:0 -6px;border-top:1px solid var(--ln);cursor:pointer;border-radius:10px}.ln:first-child{border-top:0}.ln.cur{background:color-mix(in srgb,var(--sun) 16%,transparent)}
+.ws{display:flex;flex-wrap:wrap;gap:6px 9px;align-items:flex-start}.wp{display:inline-flex;flex-direction:column;align-items:flex-start}
+.wp .e{font-size:19px;line-height:1.3;padding:0 2px;border-radius:5px}.wp .t{font-size:12.5px;line-height:1.25;color:var(--mu);padding:0 2px;border-radius:4px}
+.wp.hl .e,.wp.hl .t{background:var(--sun);color:#3a2a00}.uk{color:var(--mu);font-size:15px;margin-top:6px}.nopairs .t{display:none}.nouk .uk{display:none}
+.sp{font-size:24px;line-height:1.6;margin:10px 0}.sp span{cursor:pointer;border-radius:6px}.sp span.hl{background:var(--sun);color:#3a2a00}
+.bbprog{display:flex;gap:8px}.bbprog span{flex:1;text-align:center;padding:9px 4px;border-radius:12px;background:var(--s0);font-size:14px;color:var(--mu)}.bbprog span.ok{background:var(--okbg);color:var(--sea);font-weight:700}
 .wfront{font-size:34px;font-weight:800;text-align:center;font-family:var(--hf);line-height:1.15;margin:20px 0 4px}
 .wipa{text-align:center;color:var(--mu);font-size:18px;margin-bottom:6px}
 .wback{font-size:24px;text-align:center;color:var(--sea);font-weight:700;margin-top:10px}
@@ -216,19 +224,32 @@ textarea{width:100%;min-height:84px;border:1px solid var(--ln);border-radius:12p
   <div class="card">
     <div class="m" id="bbMeta"></div>
     <h2 id="bbTitle" style="margin-top:4px"></h2>
-    <div class="txt" id="bbText"></div>
-    <div class="btns">
-      <button class="btn" id="bbSay">▶ Слухати</button>
-      <button class="btn sec" id="bbRate">Швидкість 0.8×</button>
-    </div>
-    <button class="btn sec" id="bbCopy">Скопіювати текст для T³</button>
-    <a class="btn sec" href="https://t3.linguathor.com/" target="_blank" rel="noopener">Відкрити T³</a>
+    <div class="seg" id="bbSeg"><button data-s="d">Розбір</button><button data-s="l">Слухання</button><button data-s="s">Вголос</button></div>
+  </div>
+  <div class="card" id="bbD">
+    <div class="pills"><button class="pill2" id="bbTP">Пословний переклад</button><button class="pill2" id="bbTU">Переклад речення</button></div>
+    <div class="m" style="margin:8px 0 2px">Натисни на речення — його прочитають.</div>
+    <div id="bbDec"></div>
+    <div id="bbEnd" style="height:1px"></div>
+    <button class="btn" id="bbDDone">Розібрала ✓</button>
+  </div>
+  <div class="card hide" id="bbL">
+    <button class="btn" id="bbSay">▶ Слухати</button>
+    <div class="pills" style="margin-top:10px"><span class="m">Швидкість</span><button class="pill2" data-r="0.7">0.7×</button><button class="pill2" data-r="0.8">0.8×</button><button class="pill2" data-r="1">1×</button><button class="pill2" id="bbLoop">↻ По колу</button></div>
+    <div id="bbLis" style="margin-top:8px"></div>
+    <div id="bbAudBox" class="hide" style="margin-top:12px"><div class="m">Запис для фонового слухання — грає і з вимкненим екраном:</div><audio id="bbAud" controls preload="none"></audio></div>
+    <div class="kv" style="align-items:center;gap:10px;margin-top:12px"><span>Голос для «Слухати»</span><select id="wVoice" class="vsel"></select></div>
+  </div>
+  <div class="card hide" id="bbS">
+    <div class="m">Прочитай уголос, без перекладу. Натисни на речення, щоб послухати.</div>
+    <div id="bbSp" class="sp"></div>
+    <button class="btn" id="bbSDone">Прочитала вголос ✓</button>
   </div>
   <div class="card">
-    <h2>Як працювати з текстом</h2>
-    <div class="m">Пн — встав текст у T³ і пройди дослівний переклад.<br>Вт–Сб — активне слухання: натисни «Слухати» і стеж за перекладом у T³.<br>Нд — прочитай текст уголос без перекладу.<br>Щодня — пасивне слухання фоном.</div>
-    <div class="kv" style="align-items:center;gap:10px"><span>Голос для тексту</span><select id="wVoice" class="vsel"></select></div>
-    <div class="m" style="margin-top:6px">Текст тижня читає голос телефона. Краще жіночий «Покращений» або «Преміум» (Ava, Samantha): Параметри → Доступність → Читання і мовлення → Голоси.</div>
+    <h2>Прогрес тижня</h2>
+    <div class="bbprog" id="bbProg"></div>
+    <div class="m" style="margin-top:10px">Пн — розбір: пословний переклад, поки кожне слово не стане зрозумілим.<br>Вт–Сб — активне слухання: слухай і стеж за перекладом під словами (5 разів за тиждень).<br>Нд — прочитай уголос без перекладу.<br>Щодня — пасивне слухання фоном: запис у «Слухання».</div>
+    <button class="btn sec" id="bbCopy">Скопіювати текст</button>
   </div>
 </section>
 
@@ -267,7 +288,7 @@ function HERO(st,W){const H=236,n=st.days,goal=Math.max(60,Math.ceil((n+1)/30)*3
  const next=(Math.floor(n/10)+1)*10;return CARD(H,W,g,'День <b>'+n+'</b> підйому','наступний прапорець — на дні '+next)}
 const MIN={lesson:60,hw:15,pim:30,bbd:10,bb:12,bbr:15,film:20,words:10};
 const C={words:['Слова','5–10 хв','t-pim','W'],lesson:['Урок з Claude','8:30 · 60 хв','t-lesson','CL'],hw:['Домашка','15 хв','t-hw','HW'],pim:['Pimsleur, повний урок','~30 хв','t-pim','PI'],
-bbd:['Новий текст тижня в T³','розбір · 10 хв','t-bb','BB'],bb:['Біркенбіль: активне слухання','10–15 хв','t-bb','BB'],bbr:['Прочитати текст уголос','15 хв','t-bb','BB'],film:['Серіал / YouTube з англійськими субтитрами','20 хв · за бажанням','t-film','TV']};
+bbd:['Біркенбіль: розбір тексту','пословний переклад · 10 хв','t-bb','BB'],bb:['Біркенбіль: активне слухання','10–15 хв','t-bb','BB'],bbr:['Біркенбіль: прочитати вголос','15 хв','t-bb','BB'],film:['Серіал / YouTube з англійськими субтитрами','20 хв · за бажанням','t-film','TV']};
 const PLAN={0:['bbr','film'],1:['lesson','hw','bbd'],2:['pim','bb'],3:['lesson','hw','bb'],4:['pim','bb'],5:['lesson','hw','bb'],6:['bb']};
 const OPT={film:1};
 const DN=['Неділя','Понеділок','Вівторок','Середа','Четвер','Пʼятниця','Субота'],DS=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
@@ -295,7 +316,8 @@ function sheetPayload(){const t=today(),early=Object.keys(S.days).filter(k=>k<ST
   days.reverse();
   const pim=Object.keys(S.pim).sort().map(id=>{const x=S.pim[id]||{};return[lname(id),x.done?'так':'',!x.done&&x.t>5?fmt(x.t):'',x.note||'']}).filter(r=>r[1]||r[2]||r[3]);
   const hw=[];(D.homework||[]).forEach(w=>{const a=S.ans[w.id]||{};(w.tasks||[]).forEach((q,i)=>hw.push([w.date||'',w.title||'',i+1,q.q||'',a[i]||'',a._done?'так':'']))});
-  return JSON.stringify({ts:S.ts||Date.now(),state:S,days,pim,hw})}
+  const bb=Object.keys(S.bbw||{}).sort((x,y)=>x-y).map(k=>{const o=S.bbw[k]||{};return[+k,o.theme||'',o.d?'так':'',o.l||0,o.s?'так':'']});
+  return JSON.stringify({ts:S.ts||Date.now(),state:S,days,pim,hw,bb})}
 function pushSheet(beacon){clearTimeout(sheetT);sheetT=null;if(!SHEET_URL||!sheetDirty)return;sheetDirty=false;const body=sheetPayload();
   if(beacon&&navigator.sendBeacon){try{if(navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain;charset=utf-8'})))return}catch(e){}}
   fetch(SHEET_URL,{method:'POST',mode:'no-cors',keepalive:body.length<60000,headers:{'Content-Type':'text/plain;charset=utf-8'},body}).then(()=>{const n=new Date();$('sync').textContent='Збережено в телефоні · надіслано в Google-таблицю о '+n.getHours()+':'+pad(n.getMinutes())}).catch(()=>{sheetDirty=true})}
@@ -328,9 +350,10 @@ new ResizeObserver(()=>drawHero()).observe($('hero'));
 
 function renderToday(){const d=new Date(),k=iso(d),list=PLAN[d.getDay()],day=S.days[k]||{};
   $('todayTitle').textContent=DN[d.getDay()]+(k<START?' · стартуємо завтра':'');
-  $('todayList').innerHTML=list.map(id=>{const c=C[id];return '<div class="task"><span class="tag '+c[2]+'">'+c[3]+'</span><div class="grow">'+esc(c[0])+'<div class="m">'+esc(c[1])+(id==='pim'?' · урок '+lname(S.cur):'')+'</div></div><button class="chk'+(day[id]?' on':'')+'" data-k="'+id+'" aria-label="'+esc(c[0])+'">'+(day[id]?'✓':'')+'</button></div>'}).join('');
+  $('todayList').innerHTML=list.map(id=>{const c=C[id];return '<div class="task"><span class="tag '+c[2]+'">'+c[3]+'</span><div class="grow"'+(/^bb/.test(id)?' data-go="'+id+'" style="cursor:pointer"':'')+'>'+esc(c[0])+'<div class="m">'+esc(c[1])+(id==='pim'?' · урок '+lname(S.cur):'')+(/^bb/.test(id)?' · відкрити ›':'')+'</div></div><button class="chk'+(day[id]?' on':'')+'" data-k="'+id+'" aria-label="'+esc(c[0])+'">'+(day[id]?'✓':'')+'</button></div>'}).join('');
   $('todayList').querySelectorAll('.chk').forEach(b=>b.onclick=()=>{const dd=S.days[k]||(S.days[k]={});const was=stamped(k);dd[b.dataset.k]=!dd[b.dataset.k];save();renderAll();
     const nb=$('todayList').querySelector('[data-k="'+b.dataset.k+'"]');if(dd[b.dataset.k]&&nb)nb.classList.add('pop');if(!was&&stamped(k))toast(DONE_MSG)});
+  $('todayList').querySelectorAll('[data-go]').forEach(g=>g.onclick=()=>{bbStep={bbd:'d',bb:'l',bbr:'s'}[g.dataset.go];document.querySelector('nav button[data-t="bb"]').click();renderBb()});
   $('doneAll').style.display=dayScore(k)===1?'block':'none';
   const st=stats();$('stStreak').textContent=st.streak;$('stDays').textContent=st.days;$('stHours').textContent=st.hours;drawHero()}
 
@@ -439,21 +462,64 @@ function renderHw(){const H=D.homework||[];
     copy(('Homework: '+w.title+' ('+(w.date||'')+')\n\n'+(w.tasks||[]).map((t,i)=>(i+1)+'. '+t.q+'\nAnswer: '+(a[i]||'—')).join('\n\n')).trim())});
   $('hwBox').querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>{const a=S.ans[b.dataset.done]||(S.ans[b.dataset.done]={});a._done=!a._done;if(a._done)markToday('hw');save();renderAll()})}
 
-let rate=0.8,speaking=false,tts=null;
-function renderBb(){const w=D.week_text;if(!w){$('bbTitle').textContent='Тексту ще немає';return}
-  $('bbMeta').textContent='Тиждень '+w.week+' · '+w.theme;$('bbTitle').textContent=w.title;
-  const sents=w.text.match(/[^.!?]+[.!?]*/g)||[w.text];$('bbText').innerHTML=sents.map((s,i)=>'<span data-i="'+i+'">'+esc(s.trim())+'</span>').join(' ');
-  $('bbCopy').onclick=()=>copy(w.text)}
-$('bbRate').onclick=function(){rate=rate===0.8?1:rate===1?0.7:0.8;this.textContent='Швидкість '+rate+'×'};
-function hl(i){$('bbText').querySelectorAll('span').forEach(s=>s.classList.toggle('hl',+s.dataset.i===i))}
-function stopSay(){speaking=false;$('bbSay').textContent='▶ Слухати';hl(-1);try{speechSynthesis.cancel()}catch(e){}try{tts&&tts.stop()}catch(e){}}
-$('bbSay').onclick=async()=>{if(speaking)return stopSay();const w=D.week_text;if(!w)return;const sents=w.text.match(/[^.!?]+[.!?]*/g)||[w.text];
-  speaking=true;$('bbSay').textContent='■ Стоп';
-  if(window.speechSynthesis){let i=0;const next=()=>{if(!speaking||i>=sents.length)return stopSay();hl(i);const u=new SpeechSynthesisUtterance(sents[i].trim());u.lang='en-US';u.rate=rate*0.95;
-      const v=enVoice();if(v)u.voice=v;
-      u.onend=()=>{i++;next()};u.onerror=()=>stopSay();speechSynthesis.speak(u)};next();return}
-  if(tts){try{tts.onLine(({line})=>hl(line));await tts.speak(sents.map(s=>({text:s.trim(),language:'en',rate})))}catch(e){}stopSay();return}
-  stopSay();toast('Озвучка тут недоступна — скористайся T³')};
+let rate=0.8,speaking=false,tts=null,bbLoop=false,bbStep=null,bbRun=0;
+try{if(S.bbRate)rate=+S.bbRate}catch(e){}
+function bbLines(){const w=D.week_text;if(!w)return[];const sp=s=>s.split(/\s+/).filter(Boolean).map(x=>[x,'']);
+  if(w.lines&&w.lines.length)return w.lines.map(l=>({en:l.en||'',pairs:l.pairs&&l.pairs.length?l.pairs:sp(l.en||''),uk:l.uk||''}));
+  return (String(w.text||'').match(/[^.!?]+[.!?]*/g)||[]).map(s=>s.trim()).filter(Boolean).map(s=>({en:s,pairs:sp(s),uk:''}))}
+function bbW(){const w=D.week_text||{},k=String(w.week||0);if(!S.bbw)S.bbw={};const o=S.bbw[k]||(S.bbw[k]={d:false,l:0,s:false});if(w.theme)o.theme=w.theme;return o}
+const bbDefault=()=>{const g=new Date().getDay();return g===1?'d':g===0?'s':'l'};
+function bbMarkDay(){const k=today();if(k<START)return;const id=PLAN[new Date().getDay()].find(x=>x==='bbd'||x==='bb'||x==='bbr');if(!id)return;
+  const d=S.days[k]||(S.days[k]={});if(!d[id]){d[id]=true;renderToday();renderTrack()}}
+function renderBbProg(){const o=bbW();
+  $('bbProg').innerHTML='<span class="'+(o.d?'ok':'')+'">Розбір '+(o.d?'✓':'—')+'</span><span class="'+(o.l>=5?'ok':'')+'">Слухання '+(o.l||0)+'/5</span><span class="'+(o.s?'ok':'')+'">Вголос '+(o.s?'✓':'—')+'</span>';
+  $('bbDDone').textContent=o.d?'Розбір зараховано ✓':'Розібрала ✓';$('bbSDone').textContent=o.s?'Вголос зараховано ✓':'Прочитала вголос ✓'}
+const lineHtml=(l,i)=>'<div class="ln" data-l="'+i+'"><div class="ws">'+l.pairs.map((p,j)=>'<span class="wp" data-w="'+j+'"><span class="e">'+esc(p[0])+'</span><span class="t">'+(p[1]?esc(p[1]):'&nbsp;')+'</span></span>').join('')+'</div>'+(l.uk?'<div class="uk">'+esc(l.uk)+'</div>':'')+'</div>';
+function renderBb(){const w=D.week_text,L=bbLines();if(!w){$('bbTitle').textContent='Тексту ще немає';return}
+  $('bbMeta').textContent='Тиждень '+w.week+' · '+(w.theme||'');$('bbTitle').textContent=w.title||'';
+  if(!bbStep)bbStep=bbDefault();
+  document.querySelectorAll('#bbSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===bbStep));
+  $('bbD').classList.toggle('hide',bbStep!=='d');$('bbL').classList.toggle('hide',bbStep!=='l');$('bbS').classList.toggle('hide',bbStep!=='s');
+  const showP=S.bbP!==false,showU=S.bbU!==false,cls=(showP?'':'nopairs ')+(showU?'':'nouk');
+  $('bbTP').classList.toggle('on',showP);$('bbTU').classList.toggle('on',showU);
+  if(!speaking){$('bbDec').className=cls;$('bbDec').innerHTML=L.map(lineHtml).join('');$('bbLis').className=cls;$('bbLis').innerHTML=L.map(lineHtml).join('');
+    $('bbSp').innerHTML=L.map((l,i)=>'<span data-l="'+i+'">'+esc(l.en)+'</span>').join(' ')}
+  $('bbDec').querySelectorAll('.ln').forEach(n=>n.onclick=()=>sayLine(+n.dataset.l,$('bbDec')));
+  $('bbLis').querySelectorAll('.ln').forEach(n=>n.onclick=()=>sayLine(+n.dataset.l,$('bbLis')));
+  $('bbSp').querySelectorAll('span').forEach(n=>n.onclick=()=>sayLine(+n.dataset.l,$('bbSp')));
+  const a=$('bbAud');if(w.audio){$('bbAudBox').classList.remove('hide');if(a.dataset.src!==w.audio){a.dataset.src=w.audio;a.src=w.audio}}else $('bbAudBox').classList.add('hide');
+  document.querySelectorAll('#bbL [data-r]').forEach(b=>b.classList.toggle('on',+b.dataset.r===rate));$('bbLoop').classList.toggle('on',bbLoop);
+  $('bbSay').textContent=speaking?'■ Стоп':'▶ Слухати';$('bbCopy').onclick=()=>copy(w.text||L.map(l=>l.en).join(' '));renderBbProg()}
+function hlWord(box,li,wi){box.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));box.querySelectorAll('.cur').forEach(x=>x.classList.remove('cur'));if(li<0)return;
+  const ln=box.querySelector('[data-l="'+li+'"]');if(!ln)return;ln.classList.add(ln.tagName==='SPAN'?'hl':'cur');if(wi>=0){const x=ln.querySelector('.wp[data-w="'+wi+'"]');if(x)x.classList.add('hl')}}
+function offsets(l){let pos=0;return l.pairs.map(p=>{const i=l.en.indexOf(p[0],pos);const at=i<0?pos:i;pos=at+p[0].length;return at})}
+function speakLine(li,box,done){const l=bbLines()[li];if(!l||!window.speechSynthesis){done&&done(true);return}const off=offsets(l);
+  const u=new SpeechSynthesisUtterance(l.en);u.lang='en-US';u.rate=rate;const v=enVoice();if(v)u.voice=v;
+  u.onstart=()=>hlWord(box,li,-1);
+  u.onboundary=e=>{if(e.name&&e.name!=='word')return;let wi=0;for(let j=0;j<off.length;j++)if(off[j]<=e.charIndex)wi=j;hlWord(box,li,wi)};
+  u.onend=()=>done&&done(false);u.onerror=()=>done&&done(true);speechSynthesis.speak(u)}
+function stopSay(){speaking=false;bbRun++;try{speechSynthesis.cancel()}catch(e){}['bbDec','bbLis','bbSp'].forEach(id=>hlWord($(id),-1,-1));$('bbSay').textContent='▶ Слухати'}
+function sayLine(i,box){stopSay();if(!window.speechSynthesis){toast('Озвучка тут недоступна');return}speakLine(i,box,()=>hlWord(box,-1,-1))}
+function bbListened(){const o=bbW();o.l=(o.l||0)+1;bbMarkDay();save();toast('Прослуховування зараховано: '+o.l+'/5');renderBbProg()}
+function bbPlayAll(){if(!window.speechSynthesis){toast('Озвучка тут недоступна');return}stopSay();speaking=true;const run=++bbRun,box=$('bbLis'),L=bbLines();let i=0;$('bbSay').textContent='■ Стоп';
+  const next=err=>{if(!speaking||run!==bbRun)return;if(err)return stopSay();
+    if(i>=L.length){bbListened();if(bbLoop){i=0;setTimeout(()=>next(false),1200);return}return stopSay()}
+    const li=i++;speakLine(li,box,e=>setTimeout(()=>next(e),350))};setTimeout(()=>next(false),200)}
+$('bbSay').onclick=()=>{if(speaking)stopSay();else bbPlayAll()};
+document.querySelectorAll('#bbSeg button').forEach(b=>b.onclick=()=>{stopSay();bbStep=b.dataset.s;renderBb()});
+$('bbTP').onclick=()=>{S.bbP=!(S.bbP!==false);save();renderBb()};
+$('bbTU').onclick=()=>{S.bbU=!(S.bbU!==false);save();renderBb()};
+document.querySelectorAll('#bbL [data-r]').forEach(b=>b.onclick=()=>{rate=+b.dataset.r;S.bbRate=rate;save();renderBb()});
+$('bbLoop').onclick=()=>{bbLoop=!bbLoop;renderBb()};
+$('bbDDone').onclick=()=>{const o=bbW();if(!o.d){o.d=true;bbMarkDay();save();toast('Розбір зараховано ✓')}renderBbProg()};
+$('bbSDone').onclick=()=>{const o=bbW();if(!o.s){o.s=true;bbMarkDay();save();toast('Вголос зараховано ✓')}renderBbProg()};
+try{new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&bbStep==='d'&&$('t-bb').classList.contains('on')&&window.scrollY>80){const o=bbW();if(!o.d){o.d=true;bbMarkDay();save();toast('Розбір зараховано ✓');renderBbProg()}}})}).observe($('bbEnd'))}catch(e){}
+function msFor(el,step,title){try{const ms=navigator.mediaSession;ms.metadata=new MediaMetadata({title,artist:'English',artwork:[{src:'icon-512.png',sizes:'512x512',type:'image/png'}]});
+  ms.setActionHandler('play',()=>el.play());ms.setActionHandler('pause',()=>el.pause());
+  ms.setActionHandler('seekbackward',()=>{el.currentTime=Math.max(0,el.currentTime-step)});ms.setActionHandler('seekforward',()=>{el.currentTime=Math.min((el.duration||1e9)-0.5,el.currentTime+step)})}catch(e){}}
+$('bbAud').addEventListener('play',()=>{stopSay();try{aud.pause()}catch(e){}const w=D.week_text||{};msFor($('bbAud'),10,'Week '+w.week+' · '+(w.title||''))});
+$('bbAud').addEventListener('ended',()=>bbListened());
+aud.addEventListener('play',()=>{try{$('bbAud').pause()}catch(e){}msFor(aud,SKIP,'Pimsleur '+lname(playId||S.cur))});
 
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+b.dataset.t));window.scrollTo(0,0);if(b.dataset.t==='today')drawHero();if(b.dataset.t==='hw')fitHw()});
@@ -545,7 +611,7 @@ renderAll();
 refreshHas().then(loadCur);
 loadVoices();setTimeout(loadVoices,800);
 $('wVoice').onchange=function(){try{if(this.value)localStorage.setItem(KEY+'-voice',this.value);else localStorage.removeItem(KEY+'-voice')}catch(e){}sayEn('Hello! This is the text of the week.')};
-const APP_VER='2026-11-28a';
+const APP_VER='2026-11-28b';
 function checkUpdate(){try{fetch('index.html?check='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{const m=t.match(/const APP_VER='([^']+)'/);
   if(!m||m[1]===APP_VER)return;let tried='';try{tried=sessionStorage.getItem('english-upd')||''}catch(e){}if(tried===m[1])return;
   try{sessionStorage.setItem('english-upd',m[1])}catch(e){}keepPos();save();
